@@ -36,16 +36,13 @@ fun MainScreen() {
     val scope = rememberCoroutineScope()
     val selectedItem = remember { mutableStateOf("Home") }
 
-    // Define the new colors
     val lightGreen = Color(0xFF90EE90)
     val darkGreen = Color(0xFF388E3C)
 
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor = lightGreen
-            ) {
+            ModalDrawerSheet(drawerContainerColor = lightGreen) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = "NeuroNote",
@@ -55,73 +52,19 @@ fun MainScreen() {
                     color = darkGreen
                 )
                 Divider(color = Color.DarkGray)
-                NavigationDrawerItem(
-                    label = { Text("Home") },
-                    selected = selectedItem.value == "Home",
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        selectedItem.value = "Home"
-                    },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-                NavigationDrawerItem(
-                    label = { Text("Calendar") },
-                    selected = selectedItem.value == "Calendar",
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        selectedItem.value = "Calendar"
-                    },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-                NavigationDrawerItem(
-                    label = { Text("Mood Tracker") },
-                    selected = selectedItem.value == "Mood Tracker",
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        selectedItem.value = "Mood Tracker"
-                    },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-                NavigationDrawerItem(
-                    label = { Text("Sleep Schedule") },
-                    selected = selectedItem.value == "Sleep Schedule",
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        selectedItem.value = "Sleep Schedule"
-                    },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-                NavigationDrawerItem(
-                    label = { Text("Notes") },
-                    selected = selectedItem.value == "Notes",
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        selectedItem.value = "Notes"
-                    },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-                NavigationDrawerItem(
-                    label = { Text("Diary") },
-                    selected = selectedItem.value == "Diary",
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        selectedItem.value = "Diary"
-                    },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
 
-                Spacer(modifier = Modifier.weight(1f)) // Pushes settings to bottom
-
-                Divider(color = Color.DarkGray, modifier = Modifier.padding(vertical = 8.dp))
-                NavigationDrawerItem(
-                    label = { Text("Settings") },
-                    selected = selectedItem.value == "Settings",
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        selectedItem.value = "Settings"
-                    },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
+                val menuItems = listOf("Home", "Calendar", "Mood Tracker", "Sleep Schedule", "Notes", "Diary", "Settings")
+                menuItems.forEach { item ->
+                    NavigationDrawerItem(
+                        label = { Text(item) },
+                        selected = selectedItem.value == item,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            selectedItem.value = item
+                        },
+                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    )
+                }
             }
         },
         scrimColor = Color.Black.copy(alpha = 0.4f)
@@ -147,24 +90,18 @@ fun MainScreen() {
                         }
                     },
                     actions = {
-                        IconButton(onClick = { /* Info icon click */ }) {
+                        IconButton(onClick = { }) {
                             Icon(Icons.Filled.Info, contentDescription = "Info", tint = darkGreen)
                         }
-                        IconButton(onClick = { /* Profile click */ }) {
+                        IconButton(onClick = { }) {
                             Icon(Icons.Filled.Person, contentDescription = "Profile", tint = darkGreen)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = lightGreen
-                    )
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = lightGreen)
                 )
             },
             bottomBar = {
-                BottomAppBar(
-                    containerColor = lightGreen,
-                    tonalElevation = 2.dp,
-                    modifier = Modifier.height(32.dp)
-                ) {
+                BottomAppBar(containerColor = lightGreen, tonalElevation = 2.dp, modifier = Modifier.height(32.dp)) {
                     Text(
                         "© 2023 NeuroNote",
                         modifier = Modifier
@@ -184,13 +121,10 @@ fun MainScreen() {
                 contentAlignment = Alignment.Center
             ) {
                 when (selectedItem.value) {
-                    "Home" -> HomePage(darkGreen, lightGreen)
-                    "Calendar" -> Text("Calendar View", style = MaterialTheme.typography.titleLarge, color = darkGreen)
-                    "Mood Tracker" -> Text("Mood Tracker Interface", style = MaterialTheme.typography.titleLarge, color = darkGreen)
-                    "Sleep Schedule" -> Text("Sleep Schedule Details", style = MaterialTheme.typography.titleLarge, color = darkGreen)
-                    "Notes" -> Text("Notes Editor", style = MaterialTheme.typography.titleLarge, color = darkGreen)
-                    "Diary" -> Text("Diary Entries", style = MaterialTheme.typography.titleLarge, color = darkGreen)
-                    "Settings" -> Text("App Settings", style = MaterialTheme.typography.titleLarge, color = darkGreen)
+                    "Home" -> HomePage(darkGreen, lightGreen) {
+                        selectedItem.value = "Mood Tracker"
+                    }
+                    else -> Text("${selectedItem.value} Page", style = MaterialTheme.typography.titleLarge, color = darkGreen)
                 }
             }
         }
