@@ -38,7 +38,7 @@ fun MainScreen() {
 
     // Define the new colors
     val lightGreen = Color(0xFF90EE90)
-    val darkGreen = Color(0xFF388E3C) // A darker shade of green for contrast
+    val darkGreen = Color(0xFF388E3C)
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -184,7 +184,7 @@ fun MainScreen() {
                 contentAlignment = Alignment.Center
             ) {
                 when (selectedItem.value) {
-                    "Home" -> Text("Welcome to NeuroNote!", style = MaterialTheme.typography.titleLarge, color = darkGreen)
+                    "Home" -> HomePage(darkGreen, lightGreen)
                     "Calendar" -> Text("Calendar View", style = MaterialTheme.typography.titleLarge, color = darkGreen)
                     "Mood Tracker" -> Text("Mood Tracker Interface", style = MaterialTheme.typography.titleLarge, color = darkGreen)
                     "Sleep Schedule" -> Text("Sleep Schedule Details", style = MaterialTheme.typography.titleLarge, color = darkGreen)
