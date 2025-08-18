@@ -23,13 +23,9 @@ import kotlinx.coroutines.launch
 
 object Pages {
     const val HOME = "Home"
-    const val MOOD = "Mood"
+    const val MOOD = "Mood Tracker"
     const val DIARY_LIST = "DiaryList"
     const val DIARY_DETAIL = "DiaryDetail"
-    const val CALENDAR = "Calendar"
-    const val SLEEP = "Sleep Schedule"
-    const val NOTES = "Notes"
-    const val SETTINGS = "Settings"
 }
 
 class MainActivity : ComponentActivity() {
@@ -48,7 +44,6 @@ class MainActivity : ComponentActivity() {
 fun MainScreen() {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-
     var currentPage by remember { mutableStateOf(Pages.HOME) }
     var selectedDiary by remember { mutableStateOf<DiaryEntry?>(null) }
 
@@ -69,35 +64,23 @@ fun MainScreen() {
                 )
                 Divider(color = Color.DarkGray)
 
-                fun item(label: String, page: String) {
+                // Drawer items
+                val drawerItem: @Composable (String, String) -> Unit = { label, page ->
                     NavigationDrawerItem(
                         label = { Text(label) },
                         selected = currentPage == page ||
                                 (label == "Diary" && (currentPage == Pages.DIARY_LIST || currentPage == Pages.DIARY_DETAIL)),
                         onClick = {
                             scope.launch { drawerState.close() }
-                            currentPage = when (label) {
-                                "Home" -> Pages.HOME
-                                "Mood Tracker" -> Pages.MOOD
-                                "Diary" -> Pages.DIARY_LIST
-                                "Calendar" -> Pages.CALENDAR
-                                "Sleep Schedule" -> Pages.SLEEP
-                                "Notes" -> Pages.NOTES
-                                "Settings" -> Pages.SETTINGS
-                                else -> Pages.HOME
-                            }
+                            currentPage = page
                         },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
                 }
 
-                item("Home", Pages.HOME)
-                item("Mood Tracker", Pages.MOOD)
-                item("Diary", Pages.DIARY_LIST)
-                item("Calendar", Pages.CALENDAR)
-                item("Sleep Schedule", Pages.SLEEP)
-                item("Notes", Pages.NOTES)
-                item("Settings", Pages.SETTINGS)
+                drawerItem("Home", Pages.HOME)
+                drawerItem("Mood Tracker", Pages.MOOD)
+                drawerItem("Diary", Pages.DIARY_LIST)
             }
         },
         scrimColor = Color.Black.copy(alpha = 0.35f)
@@ -137,7 +120,7 @@ fun MainScreen() {
                 BottomAppBar(
                     containerColor = lightGreen,
                     tonalElevation = 2.dp,
-                    modifier = Modifier.height(28.dp) // small footer
+                    modifier = Modifier.height(24.dp) // smaller footer
                 ) {
                     Text(
                         "© 2025 NeuroNote",
@@ -163,36 +146,21 @@ fun MainScreen() {
                         onUpdateMoodClick = { currentPage = Pages.MOOD }
                     )
 
-                    Pages.MOOD -> MoodPage(
+                    Pages.MOOD -> MoodTrackerPage(
                         darkGreen = darkGreen,
                         lightGreen = lightGreen,
-                        onDone = { currentPage = Pages.HOME }
+                        onDone = { currentPage = Pages.HOME } // ⬅️ no back button; just finish & return
                     )
 
-                    Pages.DIARY_LIST -> DiaryListPage(
-                        darkGreen = darkGreen,
-                        lightGreen = lightGreen,
-                        onOpenEntry = { entry ->
-                            selectedDiary = entry
-                            currentPage = Pages.DIARY_DETAIL
-                        }
-                    )
+                    Pages.DIARY_LIST -> DiaryListPage(darkGreen, lightGreen) { entry ->
+                        selectedDiary = entry
+                        currentPage = Pages.DIARY_DETAIL
+                    }
 
-                    Pages.DIARY_DETAIL -> DiaryDetailPage(
-                        darkGreen = darkGreen,
-                        lightGreen = lightGreen,
-                        entry = selectedDiary,
-                        onSave = {
-                            currentPage = Pages.DIARY_LIST
-                            selectedDiary = null
-                        }
-                    )
-
-                    else -> Text(
-                        "$currentPage Page",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = darkGreen
-                    )
+                    Pages.DIARY_DETAIL -> DiaryDetailPage(darkGreen, lightGreen, selectedDiary) {
+                        currentPage = Pages.DIARY_LIST
+                        selectedDiary = null
+                    }
                 }
             }
         }

@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.sp
 import java.time.LocalDate
 
 @Composable
-fun MoodPage(
+fun MoodTrackerPage(
     darkGreen: Color,
     lightGreen: Color,
     onDone: () -> Unit
