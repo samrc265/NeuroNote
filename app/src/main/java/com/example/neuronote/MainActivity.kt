@@ -3,13 +3,13 @@ package com.example.neuronote
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             NeuroNoteTheme {
-                AppNavigation()
+                MainScreen()
             }
         }
     }
@@ -32,49 +32,42 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppNavigation() {
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
+fun MainScreen() {
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var currentPage by remember { mutableStateOf("Home") }
+    var selectedDiary by remember { mutableStateOf<DiaryEntry?>(null) }
 
     val lightGreen = Color(0xFF90EE90)
     val darkGreen = Color(0xFF388E3C)
 
     ModalNavigationDrawer(
         drawerState = drawerState,
-        scrimColor = Color.Black.copy(alpha = 0.3f),
         drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor = lightGreen
-            ) {
-                Spacer(Modifier.height(24.dp))
+            ModalDrawerSheet(drawerContainerColor = lightGreen) {
+                Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    "NeuroNote",
+                    text = "NeuroNote",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(16.dp),
                     color = darkGreen
                 )
-                Divider()
-
-                NavigationDrawerItem(
-                    label = { Text("Home") },
-                    selected = currentPage == "Home",
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        currentPage = "Home"
-                    }
-                )
-                NavigationDrawerItem(
-                    label = { Text("Mood Tracker") },
-                    selected = currentPage == "Mood",
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        currentPage = "Mood"
-                    }
-                )
+                Divider(color = Color.DarkGray)
+                listOf("Home", "Calendar", "Mood Tracker", "Sleep Schedule", "Notes", "Diary", "Settings").forEach { page ->
+                    NavigationDrawerItem(
+                        label = { Text(page) },
+                        selected = currentPage == page,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            currentPage = if (page == "Diary") "DiaryList" else page
+                        },
+                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    )
+                }
             }
-        }
+        },
+        scrimColor = Color.Black.copy(alpha = 0.4f)
     ) {
         Scaffold(
             topBar = {
@@ -97,10 +90,10 @@ fun AppNavigation() {
                         }
                     },
                     actions = {
-                        IconButton(onClick = { /* Info */ }) {
+                        IconButton(onClick = { }) {
                             Icon(Icons.Filled.Info, contentDescription = "Info", tint = darkGreen)
                         }
-                        IconButton(onClick = { /* Profile */ }) {
+                        IconButton(onClick = { }) {
                             Icon(Icons.Filled.Person, contentDescription = "Profile", tint = darkGreen)
                         }
                     },
@@ -111,30 +104,35 @@ fun AppNavigation() {
                 BottomAppBar(
                     containerColor = lightGreen,
                     tonalElevation = 2.dp,
-                    modifier = Modifier.height(28.dp) // ✅ reduced footer height
+                    modifier = Modifier.height(28.dp)
                 ) {
                     Text(
                         "© 2025 NeuroNote",
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
-                        fontSize = 10.sp, // ✅ smaller font
+                        fontSize = 10.sp,
                         color = darkGreen
                     )
                 }
             }
         ) { innerPadding ->
-            Box(Modifier.padding(innerPadding)) {
+            Box(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
                 when (currentPage) {
-                    "Home" -> HomePage(
-                        darkGreen = darkGreen,
-                        lightGreen = lightGreen,
-                        onUpdateMoodClick = { currentPage = "Mood" }
-                    )
-                    "Mood" -> MoodPage(
-                        darkGreen = darkGreen,
-                        lightGreen = lightGreen,
-                        onDone = { currentPage = "Home" }
-                    )
+                    "Home" -> HomePage(darkGreen, lightGreen) { currentPage = "Mood Tracker" }
+                    "DiaryList" -> DiaryListPage(darkGreen, lightGreen) { entry ->
+                        selectedDiary = entry
+                        currentPage = "DiaryDetail"
+                    }
+                    "DiaryDetail" -> DiaryDetailPage(darkGreen, lightGreen, selectedDiary) {
+                        currentPage = "DiaryList"
+                    }
+                    else -> Text("$currentPage Page", style = MaterialTheme.typography.titleLarge, color = darkGreen)
                 }
             }
         }
