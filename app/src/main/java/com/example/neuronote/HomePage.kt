@@ -9,13 +9,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.viewinterop.AndroidView
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.utils.ColorTemplate
-import java.time.LocalDate // ✅ Import for date handling
+import java.time.LocalDate
 
 @Composable
 fun HomePage(
@@ -32,8 +33,8 @@ fun HomePage(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 1️⃣ Graph Section
-        Text("Mood Over Time", fontSize = 18.sp, color = darkGreen)
+        // Graph
+        Text("Mood Over Time", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = darkGreen)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Month", "Year", "All Time").forEach { filter ->
                 Button(
@@ -50,8 +51,8 @@ fun HomePage(
 
         Divider()
 
-        // 2️⃣ Pie Chart Section
-        Text("Emotional Distribution", fontSize = 18.sp, color = darkGreen)
+        // Pie Chart
+        Text("Emotional Distribution", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = darkGreen)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Today", "Last 7 Days").forEach { range ->
                 Button(
@@ -70,15 +71,15 @@ fun HomePage(
                 MoodPieChart(range = pieChartRange)
             }
             Spacer(modifier = Modifier.width(8.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Mood Breakdown", fontSize = 14.sp)
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
+                Text("Mood Breakdown", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 MoodTextBreakdown(range = pieChartRange)
             }
         }
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // 3️⃣ Update Mood Button
+        // Update Mood Button
         Button(
             onClick = onUpdateMoodClick,
             colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
