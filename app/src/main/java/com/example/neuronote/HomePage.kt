@@ -149,7 +149,7 @@ fun MoodPieChart(range: String) {
         // ✅ Placeholder chart
         AndroidView(factory = { ctx ->
             PieChart(ctx).apply {
-                val dataSet = PieDataSet(listOf(PieEntry(1f, "No Data")), "")
+                val dataSet = PieDataSet(listOf(PieEntry(1f)), "")
                 dataSet.colors = listOf(AndroidColor.LTGRAY)
                 this.data = PieData(dataSet)
                 description.isEnabled = false
