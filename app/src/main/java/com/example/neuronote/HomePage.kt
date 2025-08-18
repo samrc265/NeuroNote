@@ -1,15 +1,17 @@
 package com.example.neuronote
 
 import android.graphics.Color as AndroidColor
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.viewinterop.AndroidView
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
@@ -33,7 +35,7 @@ fun HomePage(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Graph
+        // Graph section
         Text("Mood Over Time", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = darkGreen)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Month", "Year", "All Time").forEach { filter ->
@@ -51,7 +53,7 @@ fun HomePage(
 
         Divider()
 
-        // Pie Chart
+        // Pie chart section
         Text("Emotional Distribution", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = darkGreen)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Today", "Last 7 Days").forEach { range ->
@@ -79,7 +81,7 @@ fun HomePage(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Update Mood Button
+        // Update mood button
         Button(
             onClick = onUpdateMoodClick,
             colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
@@ -100,8 +102,9 @@ fun MoodLineChart(filter: String) {
         else -> history
     }
 
-    AndroidView(factory = { ctx ->
-        LineChart(ctx).apply {
+    AndroidView(
+        factory = { ctx -> LineChart(ctx) },
+        update = { chart ->
             val entries = filteredData.map {
                 Entry(it.date.dayOfYear.toFloat(), it.averageMood.toFloat())
             }
@@ -112,26 +115,27 @@ fun MoodLineChart(filter: String) {
                 setCircleColor(AndroidColor.BLUE)
                 circleRadius = 4f
             }
-            this.data = LineData(dataSet)
-            xAxis.position = XAxis.XAxisPosition.BOTTOM
-            axisLeft.axisMinimum = 1f
-            axisLeft.axisMaximum = 5f
-            axisRight.isEnabled = false
-            description.isEnabled = false
-            legend.isEnabled = false
-            invalidate()
-        }
-    }, modifier = Modifier
-        .fillMaxWidth()
-        .height(200.dp))
+            chart.data = LineData(dataSet)
+            chart.xAxis.position = XAxis.XAxisPosition.BOTTOM
+            chart.axisLeft.axisMinimum = 1f
+            chart.axisLeft.axisMaximum = 5f
+            chart.axisRight.isEnabled = false
+            chart.description.isEnabled = false
+            chart.legend.isEnabled = false
+            chart.invalidate()
+        },
+        modifier = Modifier.fillMaxWidth().height(200.dp)
+    )
 }
 
 @Composable
 fun MoodPieChart(range: String) {
-    val moods = if (range == "Today") MoodDataManager.getDailyMoods()
-    else MoodDataManager.getHistoryMoods()
-        .takeLast(7)
-        .map { DailyMood(it.averageMood.toInt(), it.date) }
+    val moods = if (range == "Today") {
+        MoodDataManager.getDailyMoods()
+    } else {
+        val last7Days = LocalDate.now().minusDays(6)..LocalDate.now()
+        MoodDataManager.getDailyMoods().filter { it.date in last7Days }
+    }
 
     AndroidView(factory = { ctx ->
         PieChart(ctx).apply {
@@ -147,17 +151,17 @@ fun MoodPieChart(range: String) {
             legend.isEnabled = false
             invalidate()
         }
-    }, modifier = Modifier
-        .fillMaxWidth()
-        .height(180.dp))
+    }, modifier = Modifier.fillMaxWidth().height(180.dp))
 }
 
 @Composable
 fun MoodTextBreakdown(range: String) {
-    val moods = if (range == "Today") MoodDataManager.getDailyMoods()
-    else MoodDataManager.getHistoryMoods()
-        .takeLast(7)
-        .map { DailyMood(it.averageMood.toInt(), it.date) }
+    val moods = if (range == "Today") {
+        MoodDataManager.getDailyMoods()
+    } else {
+        val last7Days = LocalDate.now().minusDays(6)..LocalDate.now()
+        MoodDataManager.getDailyMoods().filter { it.date in last7Days }
+    }
 
     val moodCounts = moods.groupingBy { it.mood }.eachCount()
     val total = moodCounts.values.sum().takeIf { it > 0 } ?: 1
