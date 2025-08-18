@@ -1,12 +1,10 @@
 package com.example.neuronote
 
 import android.graphics.Color as AndroidColor
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -19,6 +17,14 @@ import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.utils.ColorTemplate
 import java.time.LocalDate
+
+private val moodLabels = mapOf(
+    1 to "Very Sad",
+    2 to "Sad",
+    3 to "Neutral",
+    4 to "Happy",
+    5 to "Very Happy"
+)
 
 @Composable
 fun HomePage(
@@ -35,7 +41,7 @@ fun HomePage(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Graph section
+        // 1️⃣ Graph Section
         Text("Mood Over Time", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = darkGreen)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Month", "Year", "All Time").forEach { filter ->
@@ -53,7 +59,7 @@ fun HomePage(
 
         Divider()
 
-        // Pie chart section
+        // 2️⃣ Pie Chart Section
         Text("Emotional Distribution", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = darkGreen)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Today", "Last 7 Days").forEach { range ->
@@ -81,7 +87,7 @@ fun HomePage(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Update mood button
+        // 3️⃣ Update Mood Button
         Button(
             onClick = onUpdateMoodClick,
             colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
@@ -117,8 +123,12 @@ fun MoodLineChart(filter: String) {
             }
             chart.data = LineData(dataSet)
             chart.xAxis.position = XAxis.XAxisPosition.BOTTOM
-            chart.axisLeft.axisMinimum = 1f
-            chart.axisLeft.axisMaximum = 5f
+            chart.axisLeft.apply {
+                axisMinimum = 1f
+                axisMaximum = 5f
+                granularity = 1f
+                setLabelCount(5, true) // ✅ only show 1,2,3,4,5
+            }
             chart.axisRight.isEnabled = false
             chart.description.isEnabled = false
             chart.legend.isEnabled = false
@@ -130,44 +140,58 @@ fun MoodLineChart(filter: String) {
 
 @Composable
 fun MoodPieChart(range: String) {
-    val moods = if (range == "Today") {
-        MoodDataManager.getDailyMoods()
-    } else {
-        val last7Days = LocalDate.now().minusDays(6)..LocalDate.now()
-        MoodDataManager.getDailyMoods().filter { it.date in last7Days }
-    }
+    val moods = if (range == "Today") MoodDataManager.getDailyMoods()
+    else MoodDataManager.getHistoryMoods()
+        .takeLast(7)
+        .map { DailyMood(it.averageMood.toInt(), it.date) }
 
-    AndroidView(factory = { ctx ->
-        PieChart(ctx).apply {
-            val moodCounts = moods.groupingBy { it.mood }.eachCount()
-            val entries = moodCounts.map { PieEntry(it.value.toFloat(), "Mood ${it.key}") }
-            val dataSet = PieDataSet(entries, "").apply {
-                colors = ColorTemplate.MATERIAL_COLORS.toList()
-                valueTextColor = AndroidColor.BLACK
-                valueTextSize = 14f
+    if (moods.isEmpty()) {
+        // ✅ Placeholder chart
+        AndroidView(factory = { ctx ->
+            PieChart(ctx).apply {
+                val dataSet = PieDataSet(listOf(PieEntry(1f, "No Data")), "")
+                dataSet.colors = listOf(AndroidColor.LTGRAY)
+                this.data = PieData(dataSet)
+                description.isEnabled = false
+                legend.isEnabled = false
+                invalidate()
             }
-            this.data = PieData(dataSet)
-            description.isEnabled = false
-            legend.isEnabled = false
-            invalidate()
-        }
-    }, modifier = Modifier.fillMaxWidth().height(180.dp))
+        }, modifier = Modifier.fillMaxWidth().height(180.dp))
+    } else {
+        AndroidView(factory = { ctx ->
+            PieChart(ctx).apply {
+                val moodCounts = moods.groupingBy { it.mood }.eachCount()
+                val entries = moodCounts.map { PieEntry(it.value.toFloat(), moodLabels[it.key]) }
+                val dataSet = PieDataSet(entries, "").apply {
+                    colors = ColorTemplate.MATERIAL_COLORS.toList()
+                    valueTextColor = AndroidColor.BLACK
+                    valueTextSize = 14f
+                }
+                this.data = PieData(dataSet)
+                description.isEnabled = false
+                legend.isEnabled = false
+                invalidate()
+            }
+        }, modifier = Modifier.fillMaxWidth().height(180.dp))
+    }
 }
 
 @Composable
 fun MoodTextBreakdown(range: String) {
-    val moods = if (range == "Today") {
-        MoodDataManager.getDailyMoods()
-    } else {
-        val last7Days = LocalDate.now().minusDays(6)..LocalDate.now()
-        MoodDataManager.getDailyMoods().filter { it.date in last7Days }
-    }
+    val moods = if (range == "Today") MoodDataManager.getDailyMoods()
+    else MoodDataManager.getHistoryMoods()
+        .takeLast(7)
+        .map { DailyMood(it.averageMood.toInt(), it.date) }
 
     val moodCounts = moods.groupingBy { it.mood }.eachCount()
     val total = moodCounts.values.sum().takeIf { it > 0 } ?: 1
 
-    moodCounts.forEach { (mood, count) ->
-        val percent = (count.toFloat() / total) * 100
-        Text("Mood $mood: ${"%.1f".format(percent)}%", fontSize = 14.sp)
+    if (moodCounts.isEmpty()) {
+        Text("No data available", fontSize = 14.sp)
+    } else {
+        moodCounts.forEach { (mood, count) ->
+            val percent = (count.toFloat() / total) * 100
+            Text("${moodLabels[mood]}: ${"%.1f".format(percent)}%", fontSize = 14.sp)
+        }
     }
 }

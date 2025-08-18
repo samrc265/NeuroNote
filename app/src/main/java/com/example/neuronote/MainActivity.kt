@@ -73,7 +73,6 @@ fun AppNavigation() {
                         currentPage = "Mood"
                     }
                 )
-                // you can add Calendar / Notes / etc here
             }
         }
     ) {
@@ -109,12 +108,16 @@ fun AppNavigation() {
                 )
             },
             bottomBar = {
-                BottomAppBar(containerColor = lightGreen, tonalElevation = 2.dp) {
+                BottomAppBar(
+                    containerColor = lightGreen,
+                    tonalElevation = 2.dp,
+                    modifier = Modifier.height(28.dp) // ✅ reduced footer height
+                ) {
                     Text(
                         "© 2025 NeuroNote",
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
-                        fontSize = 12.sp,
+                        fontSize = 10.sp, // ✅ smaller font
                         color = darkGreen
                     )
                 }
@@ -130,7 +133,7 @@ fun AppNavigation() {
                     "Mood" -> MoodPage(
                         darkGreen = darkGreen,
                         lightGreen = lightGreen,
-                        onDone = { currentPage = "Home" } // after saving return Home
+                        onDone = { currentPage = "Home" }
                     )
                 }
             }
