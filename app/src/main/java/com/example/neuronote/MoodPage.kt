@@ -26,9 +26,7 @@ fun MoodPage(
     val moodLabels = listOf("Very Sad", "Sad", "Neutral", "Happy", "Very Happy")
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+        modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {

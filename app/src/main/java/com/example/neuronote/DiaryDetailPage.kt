@@ -13,9 +13,9 @@ fun DiaryDetailPage(
     entry: DiaryEntry?,
     onSave: () -> Unit
 ) {
-    var title by remember { mutableStateOf(entry?.title ?: "") }
-    var mood by remember { mutableStateOf(entry?.mood ?: 3) }
-    var content by remember { mutableStateOf(entry?.content ?: "") }
+    var title by remember(entry) { mutableStateOf(entry?.title ?: "") }
+    var mood by remember(entry) { mutableStateOf(entry?.mood ?: 3) }
+    var content by remember(entry) { mutableStateOf(entry?.content ?: "") }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -29,7 +29,7 @@ fun DiaryDetailPage(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Mood section
+        // Mood selector
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             listOf(1 to "😢", 2 to "☹️", 3 to "😐", 4 to "🙂", 5 to "😁").forEach { (value, emoji) ->
                 TextButton(
@@ -46,16 +46,22 @@ fun DiaryDetailPage(
             value = content,
             onValueChange = { content = it },
             label = { Text("Diary Text") },
-            modifier = Modifier.fillMaxSize().weight(1f),
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f),
             maxLines = Int.MAX_VALUE
         )
 
         Button(
             onClick = {
                 if (entry == null) {
-                    DiaryDataManager.addEntry(DiaryEntry(title = title, mood = mood, content = content))
+                    DiaryDataManager.addEntry(
+                        DiaryEntry(title = title.ifBlank { "Untitled" }, mood = mood, content = content)
+                    )
                 } else {
-                    DiaryDataManager.updateEntry(entry.copy(title = title, mood = mood, content = content))
+                    DiaryDataManager.updateEntry(
+                        entry.copy(title = title.ifBlank { "Untitled" }, mood = mood, content = content)
+                    )
                 }
                 onSave()
             },

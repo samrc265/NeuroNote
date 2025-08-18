@@ -16,9 +16,9 @@ import androidx.compose.ui.unit.dp
 fun DiaryListPage(
     darkGreen: androidx.compose.ui.graphics.Color,
     lightGreen: androidx.compose.ui.graphics.Color,
-    onOpenEntry: (DiaryEntry?) -> Unit // null = new entry
+    onOpenEntry: (DiaryEntry?) -> Unit // null = new
 ) {
-    val entries by remember { mutableStateOf(DiaryDataManager.getEntries()) }
+    val entries = DiaryDataManager.entries // state list
 
     Box(Modifier.fillMaxSize()) {
         if (entries.isEmpty()) {
@@ -27,13 +27,17 @@ fun DiaryListPage(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(8.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(entries) { entry ->
                     Card(
                         colors = CardDefaults.cardColors(containerColor = lightGreen),
-                        modifier = Modifier.fillMaxWidth().clickable { onOpenEntry(entry) }
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenEntry(entry) }
                     ) {
                         Row(
                             Modifier.padding(16.dp),

@@ -6,7 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +20,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.neuronote.ui.theme.NeuroNoteTheme
 import kotlinx.coroutines.launch
+
+object Pages {
+    const val HOME = "Home"
+    const val MOOD = "Mood"
+    const val DIARY_LIST = "DiaryList"
+    const val DIARY_DETAIL = "DiaryDetail"
+    const val CALENDAR = "Calendar"
+    const val SLEEP = "Sleep Schedule"
+    const val NOTES = "Notes"
+    const val SETTINGS = "Settings"
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,7 +48,8 @@ class MainActivity : ComponentActivity() {
 fun MainScreen() {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var currentPage by remember { mutableStateOf("Home") }
+
+    var currentPage by remember { mutableStateOf(Pages.HOME) }
     var selectedDiary by remember { mutableStateOf<DiaryEntry?>(null) }
 
     val lightGreen = Color(0xFF90EE90)
@@ -45,29 +59,48 @@ fun MainScreen() {
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet(drawerContainerColor = lightGreen) {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(Modifier.height(24.dp))
                 Text(
-                    text = "NeuroNote",
+                    "NeuroNote",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(16.dp),
                     color = darkGreen
                 )
                 Divider(color = Color.DarkGray)
-                listOf("Home", "Calendar", "Mood Tracker", "Sleep Schedule", "Notes", "Diary", "Settings").forEach { page ->
+
+                fun item(label: String, page: String) {
                     NavigationDrawerItem(
-                        label = { Text(page) },
-                        selected = currentPage == page,
+                        label = { Text(label) },
+                        selected = currentPage == page ||
+                                (label == "Diary" && (currentPage == Pages.DIARY_LIST || currentPage == Pages.DIARY_DETAIL)),
                         onClick = {
                             scope.launch { drawerState.close() }
-                            currentPage = if (page == "Diary") "DiaryList" else page
+                            currentPage = when (label) {
+                                "Home" -> Pages.HOME
+                                "Mood Tracker" -> Pages.MOOD
+                                "Diary" -> Pages.DIARY_LIST
+                                "Calendar" -> Pages.CALENDAR
+                                "Sleep Schedule" -> Pages.SLEEP
+                                "Notes" -> Pages.NOTES
+                                "Settings" -> Pages.SETTINGS
+                                else -> Pages.HOME
+                            }
                         },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
                 }
+
+                item("Home", Pages.HOME)
+                item("Mood Tracker", Pages.MOOD)
+                item("Diary", Pages.DIARY_LIST)
+                item("Calendar", Pages.CALENDAR)
+                item("Sleep Schedule", Pages.SLEEP)
+                item("Notes", Pages.NOTES)
+                item("Settings", Pages.SETTINGS)
             }
         },
-        scrimColor = Color.Black.copy(alpha = 0.4f)
+        scrimColor = Color.Black.copy(alpha = 0.35f)
     ) {
         Scaffold(
             topBar = {
@@ -90,10 +123,10 @@ fun MainScreen() {
                         }
                     },
                     actions = {
-                        IconButton(onClick = { }) {
+                        IconButton(onClick = { /* Info */ }) {
                             Icon(Icons.Filled.Info, contentDescription = "Info", tint = darkGreen)
                         }
-                        IconButton(onClick = { }) {
+                        IconButton(onClick = { /* Profile */ }) {
                             Icon(Icons.Filled.Person, contentDescription = "Profile", tint = darkGreen)
                         }
                     },
@@ -104,7 +137,7 @@ fun MainScreen() {
                 BottomAppBar(
                     containerColor = lightGreen,
                     tonalElevation = 2.dp,
-                    modifier = Modifier.height(28.dp)
+                    modifier = Modifier.height(28.dp) // small footer
                 ) {
                     Text(
                         "© 2025 NeuroNote",
@@ -124,15 +157,42 @@ fun MainScreen() {
                 contentAlignment = Alignment.Center
             ) {
                 when (currentPage) {
-                    "Home" -> HomePage(darkGreen, lightGreen) { currentPage = "Mood Tracker" }
-                    "DiaryList" -> DiaryListPage(darkGreen, lightGreen) { entry ->
-                        selectedDiary = entry
-                        currentPage = "DiaryDetail"
-                    }
-                    "DiaryDetail" -> DiaryDetailPage(darkGreen, lightGreen, selectedDiary) {
-                        currentPage = "DiaryList"
-                    }
-                    else -> Text("$currentPage Page", style = MaterialTheme.typography.titleLarge, color = darkGreen)
+                    Pages.HOME -> HomePage(
+                        darkGreen = darkGreen,
+                        lightGreen = lightGreen,
+                        onUpdateMoodClick = { currentPage = Pages.MOOD }
+                    )
+
+                    Pages.MOOD -> MoodPage(
+                        darkGreen = darkGreen,
+                        lightGreen = lightGreen,
+                        onDone = { currentPage = Pages.HOME }
+                    )
+
+                    Pages.DIARY_LIST -> DiaryListPage(
+                        darkGreen = darkGreen,
+                        lightGreen = lightGreen,
+                        onOpenEntry = { entry ->
+                            selectedDiary = entry
+                            currentPage = Pages.DIARY_DETAIL
+                        }
+                    )
+
+                    Pages.DIARY_DETAIL -> DiaryDetailPage(
+                        darkGreen = darkGreen,
+                        lightGreen = lightGreen,
+                        entry = selectedDiary,
+                        onSave = {
+                            currentPage = Pages.DIARY_LIST
+                            selectedDiary = null
+                        }
+                    )
+
+                    else -> Text(
+                        "$currentPage Page",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = darkGreen
+                    )
                 }
             }
         }
