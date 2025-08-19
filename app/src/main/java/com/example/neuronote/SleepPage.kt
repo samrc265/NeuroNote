@@ -32,12 +32,16 @@ fun SleepPage(darkGreen: Color, lightGreen: Color) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Weekly Sleep Tracker", style = MaterialTheme.typography.headlineSmall, color = darkGreen)
+        Text(
+            "Weekly Sleep Tracker",
+            style = MaterialTheme.typography.headlineSmall,
+            color = darkGreen
+        )
 
-        // increased size
-        SleepBarChart(referenceDay = LocalDate.now(), chartHeightDp = 420.dp)
+        // Larger chart height for readability
+        SleepBarChart(referenceDay = LocalDate.now(), chartHeightDp = 440.dp)
 
         Button(
             onClick = { showDialog = true },
@@ -60,87 +64,80 @@ fun SleepPage(darkGreen: Color, lightGreen: Color) {
 @Composable
 fun AddSleepDialog(darkGreen: Color, lightGreen: Color, onDismiss: () -> Unit) {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    var selectedHours by remember { mutableStateOf(8) }
-    var expandedHours by remember { mutableStateOf(false) }
+    var selectedHours by remember { mutableStateOf("") }
 
     val context = LocalContext.current
 
-    // Restrict date selection to the current week (Monday..Sunday)
+    // Limit selection to this week
     val mondayOfWeek = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
     val sundayOfWeek = mondayOfWeek.plusDays(6)
 
-    // helper to open Android DatePickerDialog
     fun showAndroidDatePicker() {
         val dpd = DatePickerDialog(
             context,
             { _, year, monthZeroBased, dayOfMonth ->
-                // month is 0-based from Android DatePicker -> convert to LocalDate (1-based)
                 selectedDate = LocalDate.of(year, monthZeroBased + 1, dayOfMonth)
             },
             selectedDate.year,
             selectedDate.monthValue - 1,
             selectedDate.dayOfMonth
         )
-
-        // restrict selectable range to current week
         val zone = ZoneId.systemDefault()
         dpd.datePicker.minDate = mondayOfWeek.atStartOfDay(zone).toInstant().toEpochMilli()
         dpd.datePicker.maxDate = sundayOfWeek.atStartOfDay(zone).toInstant().toEpochMilli()
-
         dpd.show()
     }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Sleep Entry") },
+        title = {
+            Text("Add Sleep Entry", style = MaterialTheme.typography.titleLarge, color = darkGreen)
+        },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                // Date selector (opens Android DatePicker)
-                Button(
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Date selector
+                OutlinedButton(
                     onClick = { showAndroidDatePicker() },
-                    colors = ButtonDefaults.buttonColors(containerColor = lightGreen)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Date: ${selectedDate.format(DateTimeFormatter.ISO_DATE)}")
                 }
 
-                // Hours selector (dropdown)
-                Box {
-                    Button(
-                        onClick = { expandedHours = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = lightGreen)
-                    ) {
-                        Text("$selectedHours hrs")
-                    }
-                    DropdownMenu(expanded = expandedHours, onDismissRequest = { expandedHours = false }) {
-                        (0..24).forEach { hr ->
-                            DropdownMenuItem(
-                                text = { Text("$hr hrs") },
-                                onClick = {
-                                    selectedHours = hr
-                                    expandedHours = false
-                                }
-                            )
-                        }
-                    }
-                }
+                // Hours input
+                OutlinedTextField(
+                    value = selectedHours,
+                    onValueChange = { if (it.all { c -> c.isDigit() }) selectedHours = it },
+                    label = { Text("Hours Slept") },
+                    placeholder = { Text("e.g. 7") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
         confirmButton = {
             TextButton(onClick = {
-                // Save to SleepDataManager (will update UI reactively)
-                SleepDataManager.addSleepEntry(selectedDate, selectedHours)
-                onDismiss()
-            }) { Text("Save", color = darkGreen) }
+                val hours = selectedHours.toIntOrNull()
+                if (hours != null && hours in 0..24) {
+                    SleepDataManager.addSleepEntry(selectedDate, hours)
+                    onDismiss()
+                }
+            }) {
+                Text("Save", color = darkGreen)
+            }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = Color.Gray) }
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = Color.Gray)
+            }
         }
     )
 }
 
 @Composable
 fun SleepBarChart(referenceDay: LocalDate, chartHeightDp: Dp) {
-    // derivedStateOf will recompute when SleepDataManager.sleepData (the state list) changes
     val weekMap by remember { derivedStateOf { SleepDataManager.getHoursMapForWeek(referenceDay) } }
 
     AndroidView(
@@ -151,6 +148,7 @@ fun SleepBarChart(referenceDay: LocalDate, chartHeightDp: Dp) {
                 axisRight.isEnabled = false
                 xAxis.position = XAxis.XAxisPosition.BOTTOM
                 xAxis.setDrawGridLines(false)
+                xAxis.granularity = 1f
                 setFitBars(true)
             }
         },
@@ -160,29 +158,32 @@ fun SleepBarChart(referenceDay: LocalDate, chartHeightDp: Dp) {
                 DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY
             )
 
-            val barEntries = days.mapIndexed { idx, d ->
-                BarEntry(idx.toFloat(), (weekMap[d] ?: 0).toFloat())
+            val entries = days.mapIndexed { idx, day ->
+                BarEntry(idx.toFloat(), (weekMap[day] ?: 0).toFloat())
             }
 
-            val ds = BarDataSet(barEntries, "Hours slept").apply {
+            val dataSet = BarDataSet(entries, "Hours Slept").apply {
                 color = AndroidColor.rgb(56, 142, 60)
                 valueTextColor = AndroidColor.BLACK
                 valueTextSize = 12f
+                barShadowColor = AndroidColor.LTGRAY
+                setDrawValues(true)
             }
 
-            chart.data = BarData(ds)
+            val data = BarData(dataSet).apply {
+                barWidth = 0.9f // wider bars, fewer gaps
+            }
 
-            // labels Mon Tue ...
+            chart.data = data
+
+            // Always show 7 day labels
             val labels = days.map { it.getDisplayName(java.time.format.TextStyle.SHORT, Locale.getDefault()) }
             chart.xAxis.valueFormatter = IndexAxisValueFormatter(labels)
-            chart.xAxis.granularity = 1f
             chart.xAxis.setLabelCount(7, true)
 
-            // set Y-axis max dynamically (at least 12)
-            val maxHours = (weekMap.values.maxOrNull() ?: 12)
-            val yMax = maxOf(12, maxHours + 2)
+            val maxHours = (weekMap.values.maxOrNull() ?: 8)
             chart.axisLeft.axisMinimum = 0f
-            chart.axisLeft.axisMaximum = yMax.toFloat()
+            chart.axisLeft.axisMaximum = (maxHours + 2).toFloat()
 
             chart.invalidate()
         },
