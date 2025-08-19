@@ -11,52 +11,28 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import java.time.format.DateTimeFormatter
 
 @Composable
-fun DiaryListPage(
-    darkGreen: androidx.compose.ui.graphics.Color,
-    lightGreen: androidx.compose.ui.graphics.Color,
-    onOpenEntry: (DiaryEntry?) -> Unit // null = new
-) {
-    val entries = DiaryDataManager.entries // state list
+fun DiaryListPage(darkGreen: androidx.compose.ui.graphics.Color, lightGreen: androidx.compose.ui.graphics.Color, onOpenEntry: (DiaryEntry?) -> Unit) {
+    val entries = DiaryDataManager.entries
 
-    Box(Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
         if (entries.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No diary entries yet")
             }
         } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            LazyColumn(modifier = Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(entries) { entry ->
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = lightGreen),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onOpenEntry(entry) }
-                    ) {
-                        Row(
-                            Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = when (entry.mood) {
-                                    1 -> "😢"
-                                    2 -> "☹️"
-                                    3 -> "😐"
-                                    4 -> "🙂"
-                                    else -> "😁"
-                                },
-                                style = MaterialTheme.typography.headlineSmall,
-                                modifier = Modifier.padding(end = 12.dp)
-                            )
+                    Card(colors = CardDefaults.cardColors(containerColor = lightGreen), modifier = Modifier.fillMaxWidth().clickable { onOpenEntry(entry) }) {
+                        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(when (entry.mood) {
+                                1 -> "😢"; 2 -> "☹️"; 3 -> "😐"; 4 -> "🙂"; else -> "😁"
+                            }, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(end = 12.dp))
                             Column {
                                 Text(entry.title, style = MaterialTheme.typography.titleMedium)
-                                Text(entry.date.toLocalDate().toString())
+                                Text(entry.date.toLocalDate().format(DateTimeFormatter.ISO_DATE))
                             }
                         }
                     }
@@ -64,13 +40,7 @@ fun DiaryListPage(
             }
         }
 
-        FloatingActionButton(
-            onClick = { onOpenEntry(null) },
-            containerColor = darkGreen,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
+        FloatingActionButton(onClick = { onOpenEntry(null) }, containerColor = darkGreen, modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
             Icon(Icons.Filled.Add, contentDescription = "Add", tint = androidx.compose.ui.graphics.Color.White)
         }
     }
