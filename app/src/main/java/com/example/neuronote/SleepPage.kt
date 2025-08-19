@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.example.neuronote
 
 import android.app.DatePickerDialog
@@ -40,7 +42,6 @@ fun SleepPage(darkGreen: Color, lightGreen: Color) {
             color = darkGreen
         )
 
-        // Larger chart height for readability
         SleepBarChart(referenceDay = LocalDate.now(), chartHeightDp = 440.dp)
 
         Button(
@@ -61,12 +62,15 @@ fun SleepPage(darkGreen: Color, lightGreen: Color) {
     }
 }
 
+@ExperimentalMaterial3Api
 @Composable
 fun AddSleepDialog(darkGreen: Color, lightGreen: Color, onDismiss: () -> Unit) {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    var selectedHours by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
+    var selectedHours by remember { mutableStateOf<Int?>(null) }
 
     val context = LocalContext.current
+    val hoursOptions = (0..12).toList() // dropdown 0–12 hours
 
     // Limit selection to this week
     val mondayOfWeek = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
@@ -106,22 +110,44 @@ fun AddSleepDialog(darkGreen: Color, lightGreen: Color, onDismiss: () -> Unit) {
                     Text("Date: ${selectedDate.format(DateTimeFormatter.ISO_DATE)}")
                 }
 
-                // Hours input
-                OutlinedTextField(
-                    value = selectedHours,
-                    onValueChange = { if (it.all { c -> c.isDigit() }) selectedHours = it },
-                    label = { Text("Hours Slept") },
-                    placeholder = { Text("e.g. 7") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                // Dropdown for hours
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedHours?.toString() ?: "",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Hours Slept") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                        },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        hoursOptions.forEach { hr ->
+                            DropdownMenuItem(
+                                text = { Text("$hr hours") },
+                                onClick = {
+                                    selectedHours = hr
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
             TextButton(onClick = {
-                val hours = selectedHours.toIntOrNull()
-                if (hours != null && hours in 0..24) {
-                    SleepDataManager.addSleepEntry(selectedDate, hours)
+                if (selectedHours != null) {
+                    SleepDataManager.addSleepEntry(selectedDate, selectedHours!!)
                     onDismiss()
                 }
             }) {
@@ -159,24 +185,28 @@ fun SleepBarChart(referenceDay: LocalDate, chartHeightDp: Dp) {
             )
 
             val entries = days.mapIndexed { idx, day ->
-                BarEntry(idx.toFloat(), (weekMap[day] ?: 0).toFloat())
+                val hours = weekMap[day] ?: 0
+                // simulate blocky look: stack 1f for each hour
+                val stack = FloatArray(hours) { 1f }
+                BarEntry(idx.toFloat(), stack)
             }
 
             val dataSet = BarDataSet(entries, "Hours Slept").apply {
-                color = AndroidColor.rgb(56, 142, 60)
+                setColors(
+                    IntArray(12) { AndroidColor.rgb(56, 142, 60) }.toList()
+                )
                 valueTextColor = AndroidColor.BLACK
-                valueTextSize = 12f
-                barShadowColor = AndroidColor.LTGRAY
-                setDrawValues(true)
+                valueTextSize = 10f
+                isHighlightEnabled = false
+                setDrawValues(false) // no clutter
             }
 
             val data = BarData(dataSet).apply {
-                barWidth = 0.9f // wider bars, fewer gaps
+                barWidth = 0.8f
             }
 
             chart.data = data
 
-            // Always show 7 day labels
             val labels = days.map { it.getDisplayName(java.time.format.TextStyle.SHORT, Locale.getDefault()) }
             chart.xAxis.valueFormatter = IndexAxisValueFormatter(labels)
             chart.xAxis.setLabelCount(7, true)
