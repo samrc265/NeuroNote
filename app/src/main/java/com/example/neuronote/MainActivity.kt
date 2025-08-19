@@ -50,8 +50,9 @@ fun MainScreen() {
     var currentPage by remember { mutableStateOf(Pages.HOME) }
     var selectedDiary by remember { mutableStateOf<DiaryEntry?>(null) }
 
-    val lightGreen = Color(0xFF90EE90)
-    val darkGreen = Color(0xFF388E3C)
+    val lightGreen = Color(0xFFFFD580)
+    val darkGreen = Color(0xFFFFB085) // keeping in case needed for accents
+    val textColor = Color(0xFF4E342E)
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -63,12 +64,12 @@ fun MainScreen() {
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(16.dp),
-                    color = darkGreen
+                    color = textColor
                 )
                 Divider()
                 val drawerItem: @Composable (String, String) -> Unit = { label, page ->
                     NavigationDrawerItem(
-                        label = { Text(label) },
+                        label = { Text(label, color = textColor) },
                         selected = currentPage == page ||
                                 (label == "Diary" && (currentPage == Pages.DIARY_LIST || currentPage == Pages.DIARY_DETAIL)),
                         onClick = {
@@ -87,7 +88,7 @@ fun MainScreen() {
                 Spacer(Modifier.weight(1f))
                 Divider(modifier = Modifier.padding(vertical = 8.dp))
                 NavigationDrawerItem(
-                    label = { Text("Settings") },
+                    label = { Text("Settings", color = textColor) },
                     selected = currentPage == "Settings",
                     onClick = {
                         scope.launch { drawerState.close() }
@@ -102,19 +103,19 @@ fun MainScreen() {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("NeuroNote", color = darkGreen, fontWeight = FontWeight.Bold) },
+                    title = { Text("NeuroNote", color = textColor, fontWeight = FontWeight.Bold) },
                     navigationIcon = {
                         IconButton(onClick = {
                             scope.launch {
                                 if (drawerState.isClosed) drawerState.open() else drawerState.close()
                             }
                         }) {
-                            Icon(Icons.Filled.Menu, contentDescription = "Menu", tint = darkGreen)
+                            Icon(Icons.Filled.Menu, contentDescription = "Menu", tint = textColor)
                         }
                     },
                     actions = {
-                        IconButton(onClick = { }) { Icon(Icons.Filled.Info, contentDescription = "Info", tint = darkGreen) }
-                        IconButton(onClick = { }) { Icon(Icons.Filled.Person, contentDescription = "Profile", tint = darkGreen) }
+                        IconButton(onClick = { }) { Icon(Icons.Filled.Info, contentDescription = "Info", tint = textColor) }
+                        IconButton(onClick = { }) { Icon(Icons.Filled.Person, contentDescription = "Profile", tint = textColor) }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = lightGreen)
                 )
@@ -130,7 +131,7 @@ fun MainScreen() {
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                         fontSize = 10.sp,
-                        color = darkGreen
+                        color = textColor
                     )
                 }
             }
@@ -162,7 +163,7 @@ fun MainScreen() {
                         selectedDiary = null
                     }
                     Pages.SLEEP -> SleepPage(darkGreen = darkGreen, lightGreen = lightGreen)
-                    else -> Text("$currentPage", color = darkGreen)
+                    else -> Text("$currentPage", color = textColor)
                 }
             }
         }
