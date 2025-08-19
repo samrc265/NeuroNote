@@ -27,7 +27,7 @@ import java.time.temporal.TemporalAdjusters
 import java.util.Locale
 
 @Composable
-fun SleepPage(darkGreen: Color, lightGreen: Color) {
+fun SleepPage(darkColor: Color, lightColor: Color) {
     var showDialog by remember { mutableStateOf(false) }
 
     Column(
@@ -39,14 +39,14 @@ fun SleepPage(darkGreen: Color, lightGreen: Color) {
         Text(
             "Weekly Sleep Tracker",
             style = MaterialTheme.typography.headlineSmall,
-            color = darkGreen
+            color = darkColor
         )
 
-        SleepBarChart(referenceDay = LocalDate.now(), chartHeightDp = 440.dp)
+        SleepBarChart(darkColor = darkColor, referenceDay = LocalDate.now(), chartHeightDp = 440.dp)
 
         Button(
             onClick = { showDialog = true },
-            colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
+            colors = ButtonDefaults.buttonColors(containerColor = darkColor),
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Add / Update Sleep", color = Color.White)
@@ -55,8 +55,8 @@ fun SleepPage(darkGreen: Color, lightGreen: Color) {
 
     if (showDialog) {
         AddSleepDialog(
-            darkGreen = darkGreen,
-            lightGreen = lightGreen,
+            darkColor = darkColor,
+            lightColor = lightColor,
             onDismiss = { showDialog = false }
         )
     }
@@ -64,7 +64,7 @@ fun SleepPage(darkGreen: Color, lightGreen: Color) {
 
 @ExperimentalMaterial3Api
 @Composable
-fun AddSleepDialog(darkGreen: Color, lightGreen: Color, onDismiss: () -> Unit) {
+fun AddSleepDialog(darkColor: Color, lightColor: Color, onDismiss: () -> Unit) {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var expanded by remember { mutableStateOf(false) }
     var selectedHours by remember { mutableStateOf<Int?>(null) }
@@ -95,7 +95,7 @@ fun AddSleepDialog(darkGreen: Color, lightGreen: Color, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("Add Sleep Entry", style = MaterialTheme.typography.titleLarge, color = darkGreen)
+            Text("Add Sleep Entry", style = MaterialTheme.typography.titleLarge, color = darkColor)
         },
         text = {
             Column(
@@ -151,7 +151,7 @@ fun AddSleepDialog(darkGreen: Color, lightGreen: Color, onDismiss: () -> Unit) {
                     onDismiss()
                 }
             }) {
-                Text("Save", color = darkGreen)
+                Text("Save", color = darkColor)
             }
         },
         dismissButton = {
@@ -163,7 +163,7 @@ fun AddSleepDialog(darkGreen: Color, lightGreen: Color, onDismiss: () -> Unit) {
 }
 
 @Composable
-fun SleepBarChart(referenceDay: LocalDate, chartHeightDp: Dp) {
+fun SleepBarChart(darkColor: Color, referenceDay: LocalDate, chartHeightDp: Dp) {
     val weekMap by remember { derivedStateOf { SleepDataManager.getHoursMapForWeek(referenceDay) } }
 
     AndroidView(
@@ -186,15 +186,12 @@ fun SleepBarChart(referenceDay: LocalDate, chartHeightDp: Dp) {
 
             val entries = days.mapIndexed { idx, day ->
                 val hours = weekMap[day] ?: 0
-                // simulate blocky look: stack 1f for each hour
                 val stack = FloatArray(hours) { 1f }
                 BarEntry(idx.toFloat(), stack)
             }
 
             val dataSet = BarDataSet(entries, "Hours Slept").apply {
-                setColors(
-                    IntArray(12) { AndroidColor.rgb(56, 142, 60) }.toList()
-                )
+                setColors(darkColor.hashCode())
                 valueTextColor = AndroidColor.BLACK
                 valueTextSize = 10f
                 isHighlightEnabled = false

@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun DiaryDetailPage(darkGreen: androidx.compose.ui.graphics.Color, lightGreen: androidx.compose.ui.graphics.Color, entry: DiaryEntry?, onSave: () -> Unit) {
+fun DiaryDetailPage(darkColor: androidx.compose.ui.graphics.Color, lightColor: androidx.compose.ui.graphics.Color, entry: DiaryEntry?, onSave: () -> Unit) {
     var title by remember { mutableStateOf(entry?.title ?: "") }
     var mood by remember { mutableStateOf(entry?.mood ?: 3) }
     var content by remember { mutableStateOf(entry?.content ?: "") }
@@ -17,7 +17,7 @@ fun DiaryDetailPage(darkGreen: androidx.compose.ui.graphics.Color, lightGreen: a
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             listOf(1 to "😢", 2 to "☹️", 3 to "😐", 4 to "🙂", 5 to "😁").forEach { (value, emoji) ->
-                TextButton(onClick = { mood = value }, colors = ButtonDefaults.buttonColors(containerColor = if (mood == value) darkGreen else lightGreen)) {
+                TextButton(onClick = { mood = value }, colors = ButtonDefaults.buttonColors(containerColor = if (mood == value) darkColor else lightColor)) {
                     Text(emoji, fontSize = MaterialTheme.typography.headlineLarge.fontSize)
                 }
             }
@@ -32,7 +32,7 @@ fun DiaryDetailPage(darkGreen: androidx.compose.ui.graphics.Color, lightGreen: a
                 DiaryDataManager.updateEntry(entry.copy(title = title.ifBlank { "Untitled" }, mood = mood, content = content))
             }
             onSave()
-        }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = darkGreen)) {
+        }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = darkColor)) {
             Text("Save", color = androidx.compose.ui.graphics.Color.White)
         }
     }

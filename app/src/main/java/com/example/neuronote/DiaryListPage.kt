@@ -16,8 +16,8 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun DiaryListPage(
-    darkGreen: androidx.compose.ui.graphics.Color,
-    lightGreen: androidx.compose.ui.graphics.Color,
+    darkColor: androidx.compose.ui.graphics.Color,
+    lightColor: androidx.compose.ui.graphics.Color,
     onOpenEntry: (DiaryEntry?) -> Unit
 ) {
     val entries = DiaryDataManager.entries
@@ -36,7 +36,7 @@ fun DiaryListPage(
             ) {
                 items(entries) { entry ->
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = lightGreen),
+                        colors = CardDefaults.cardColors(containerColor = lightColor),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -74,7 +74,7 @@ fun DiaryListPage(
                                 Icon(
                                     imageVector = Icons.Default.Delete,
                                     contentDescription = "Delete Entry",
-                                    tint = darkGreen
+                                    tint = darkColor
                                 )
                             }
                         }
@@ -85,7 +85,7 @@ fun DiaryListPage(
 
         FloatingActionButton(
             onClick = { onOpenEntry(null) },
-            containerColor = darkGreen,
+            containerColor = darkColor,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)

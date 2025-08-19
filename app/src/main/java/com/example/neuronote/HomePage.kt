@@ -15,7 +15,6 @@ import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.*
-import com.github.mikephil.charting.utils.ColorTemplate
 import java.time.LocalDate
 
 private val moodLabels = mapOf(
@@ -27,37 +26,37 @@ private val moodLabels = mapOf(
 )
 
 @Composable
-fun HomePage(darkGreen: Color, lightGreen: Color, onUpdateMoodClick: () -> Unit) {
+fun HomePage(darkColor: Color, lightColor: Color, onUpdateMoodClick: () -> Unit) {
     var graphFilter by remember { mutableStateOf("Month") }
     var pieChartRange by remember { mutableStateOf("Today") }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text("Mood Over Time", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = darkGreen)
+        Text("Mood Over Time", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = darkColor)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Month", "Year", "All Time").forEach { filter ->
                 Button(
                     onClick = { graphFilter = filter },
-                    colors = ButtonDefaults.buttonColors(containerColor = if (graphFilter == filter) darkGreen else lightGreen)
-                ) { Text(filter, color = if (graphFilter == filter) Color.White else darkGreen) }
+                    colors = ButtonDefaults.buttonColors(containerColor = if (graphFilter == filter) darkColor else lightColor)
+                ) { Text(filter, color = if (graphFilter == filter) Color.White else darkColor) }
             }
         }
         MoodLineChart(filter = graphFilter)
 
         Divider()
 
-        Text("Emotional Distribution", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = darkGreen)
+        Text("Emotional Distribution", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = darkColor)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Today", "Last 7 Days").forEach { range ->
                 Button(
                     onClick = { pieChartRange = range },
-                    colors = ButtonDefaults.buttonColors(containerColor = if (pieChartRange == range) darkGreen else lightGreen)
-                ) { Text(range, color = if (pieChartRange == range) Color.White else darkGreen) }
+                    colors = ButtonDefaults.buttonColors(containerColor = if (pieChartRange == range) darkColor else lightColor)
+                ) { Text(range, color = if (pieChartRange == range) Color.White else darkColor) }
             }
         }
 
         Row(modifier = Modifier.fillMaxWidth()) {
             Box(modifier = Modifier.weight(1f)) {
-                MoodPieChart(range = pieChartRange)
+                MoodPieChart(range = pieChartRange, darkColor = darkColor, lightColor = lightColor)
             }
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
@@ -68,7 +67,7 @@ fun HomePage(darkGreen: Color, lightGreen: Color, onUpdateMoodClick: () -> Unit)
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Button(onClick = onUpdateMoodClick, colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
+        Button(onClick = onUpdateMoodClick, colors = ButtonDefaults.buttonColors(containerColor = darkColor),
             shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
             Text("Update Current Mood", color = Color.White, fontSize = 16.sp)
         }
@@ -104,7 +103,7 @@ fun MoodLineChart(filter: String) {
 }
 
 @Composable
-fun MoodPieChart(range: String) {
+fun MoodPieChart(range: String, darkColor: Color, lightColor: Color) {
     val moods: List<DailyMood> = if (range == "Today") {
         MoodDataManager.dailyMoods
     } else {
@@ -127,8 +126,18 @@ fun MoodPieChart(range: String) {
             PieChart(ctx).apply {
                 val counts = moods.groupingBy { it.mood }.eachCount()
                 val entries = counts.map { PieEntry(it.value.toFloat(), moodLabels[it.key]) }
+                val colors = entries.map {
+                    when (it.label) {
+                        "Very Sad" -> Color(0xFFE57373) // Light Red
+                        "Sad" -> Color(0xFFF44336)    // Red
+                        "Neutral" -> Color(0xFFFFCA28) // Yellow
+                        "Happy" -> Color(0xFF66BB6A)   // Light Green
+                        "Very Happy" -> Color(0xFF133D14)
+                        else -> lightColor
+                    }.hashCode()
+                }
                 val ds = PieDataSet(entries, "").apply {
-                    colors = ColorTemplate.MATERIAL_COLORS.toList()
+                    setColors(colors)
                     valueTextColor = AndroidColor.BLACK; valueTextSize = 14f
                 }
                 data = PieData(ds)

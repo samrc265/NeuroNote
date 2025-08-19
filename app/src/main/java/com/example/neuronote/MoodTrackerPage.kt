@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.sp
 import java.time.LocalDate
 
 @Composable
-fun MoodTrackerPage(darkGreen: Color, lightGreen: Color, onDone: () -> Unit) {
+fun MoodTrackerPage(darkColor: Color, lightColor: Color, onDone: () -> Unit) {
     var mood by remember { mutableStateOf(3) }
     var note by remember { mutableStateOf("") }
 
@@ -26,10 +26,10 @@ fun MoodTrackerPage(darkGreen: Color, lightGreen: Color, onDone: () -> Unit) {
             Text(moodEmojis[targetMood - 1], fontSize = 80.sp)
         }
 
-        Text(moodLabels[mood - 1], fontWeight = FontWeight.Bold, fontSize = 20.sp, color = darkGreen)
+        Text(moodLabels[mood - 1], fontWeight = FontWeight.Bold, fontSize = 20.sp, color = darkColor)
 
         Slider(value = mood.toFloat(), onValueChange = { mood = it.toInt().coerceIn(1,5) }, valueRange = 1f..5f, steps = 3,
-            colors = SliderDefaults.colors(thumbColor = darkGreen, activeTrackColor = darkGreen, inactiveTrackColor = lightGreen))
+            colors = SliderDefaults.colors(thumbColor = darkColor, activeTrackColor = darkColor, inactiveTrackColor = lightColor))
 
         OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text("Add a note (optional)") }, modifier = Modifier.fillMaxWidth(), maxLines = 4)
 
@@ -39,7 +39,7 @@ fun MoodTrackerPage(darkGreen: Color, lightGreen: Color, onDone: () -> Unit) {
             MoodDataManager.addDailyMood(mood, LocalDate.now(), note.ifBlank { null })
             note = ""
             onDone()
-        }, colors = ButtonDefaults.buttonColors(containerColor = darkGreen), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+        }, colors = ButtonDefaults.buttonColors(containerColor = darkColor), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
             Text("Save Mood", color = Color.White, fontSize = 16.sp)
         }
     }
