@@ -26,15 +26,14 @@ object Pages {
     const val MOOD = "Mood Tracker"
     const val DIARY_LIST = "DiaryList"
     const val DIARY_DETAIL = "DiaryDetail"
+    const val SLEEP = "Sleep"
 }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            NeuroNoteTheme {
-                MainScreen()
-            }
+            NeuroNoteTheme { MainScreen() }
         }
     }
 }
@@ -64,7 +63,6 @@ fun MainScreen() {
                 )
                 Divider(color = Color.DarkGray)
 
-                // Drawer items
                 val drawerItem: @Composable (String, String) -> Unit = { label, page ->
                     NavigationDrawerItem(
                         label = { Text(label) },
@@ -81,9 +79,10 @@ fun MainScreen() {
                 drawerItem("Home", Pages.HOME)
                 drawerItem("Mood Tracker", Pages.MOOD)
                 drawerItem("Diary", Pages.DIARY_LIST)
+                drawerItem("Sleep Schedule", Pages.SLEEP)
             }
         },
-        scrimColor = Color.Black.copy(alpha = 0.35f)
+        scrimColor = Color.Black.copy(alpha = 0.4f)
     ) {
         Scaffold(
             topBar = {
@@ -120,7 +119,7 @@ fun MainScreen() {
                 BottomAppBar(
                     containerColor = lightGreen,
                     tonalElevation = 2.dp,
-                    modifier = Modifier.height(24.dp) // smaller footer
+                    modifier = Modifier.height(24.dp)
                 ) {
                     Text(
                         "© 2025 NeuroNote",
@@ -149,7 +148,7 @@ fun MainScreen() {
                     Pages.MOOD -> MoodTrackerPage(
                         darkGreen = darkGreen,
                         lightGreen = lightGreen,
-                        onDone = { currentPage = Pages.HOME } // ⬅️ no back button; just finish & return
+                        onDone = { currentPage = Pages.HOME } // ✅ pass the missing parameter
                     )
 
                     Pages.DIARY_LIST -> DiaryListPage(darkGreen, lightGreen) { entry ->
@@ -157,10 +156,16 @@ fun MainScreen() {
                         currentPage = Pages.DIARY_DETAIL
                     }
 
-                    Pages.DIARY_DETAIL -> DiaryDetailPage(darkGreen, lightGreen, selectedDiary) {
+                    Pages.DIARY_DETAIL -> DiaryDetailPage(
+                        darkGreen = darkGreen,
+                        lightGreen = lightGreen,
+                        entry = selectedDiary
+                    ) {
                         currentPage = Pages.DIARY_LIST
                         selectedDiary = null
                     }
+
+                    Pages.SLEEP -> SleepPage(darkGreen, lightGreen)
                 }
             }
         }

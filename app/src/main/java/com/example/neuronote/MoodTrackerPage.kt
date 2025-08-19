@@ -30,10 +30,15 @@ fun MoodTrackerPage(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        AnimatedContent(targetState = mood, label = "MoodEmoji") { targetMood ->
-            Text(text = moodEmojis[targetMood - 1], fontSize = 80.sp)
+        AnimatedContent(targetState = mood, label = "MoodEmoji") { target ->
+            Text(text = moodEmojis[target - 1], fontSize = 80.sp)
         }
-        Text(moodLabels[mood - 1], fontWeight = FontWeight.Bold, fontSize = 20.sp, color = darkGreen)
+        Text(
+            moodLabels[mood - 1],
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            color = darkGreen
+        )
 
         Slider(
             value = mood.toFloat(),
@@ -61,7 +66,7 @@ fun MoodTrackerPage(
             onClick = {
                 MoodDataManager.addDailyMood(mood, LocalDate.now(), note.ifBlank { null })
                 note = ""
-                onDone()
+                onDone() // ✅ return to Home (or wherever you decide)
             },
             colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
             shape = RoundedCornerShape(12.dp),
