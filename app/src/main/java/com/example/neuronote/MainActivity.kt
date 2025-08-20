@@ -35,10 +35,37 @@ fun MainScreen() {
     val scope = rememberCoroutineScope()
     var currentPage by remember { mutableStateOf("Home") }
     var diaryEntryToEdit by remember { mutableStateOf<DiaryEntry?>(null) }
+    var showInfoDialog by remember { mutableStateOf(false) }
 
     // observe theme manager values
     val lightColor by AppThemeManager.lightColor
     val darkColor by AppThemeManager.darkColor
+
+    val infoContent = remember(currentPage) {
+        when (currentPage) {
+            "Home" -> InfoContent(
+                title = "Home Page",
+                text = "This is your dashboard. It provides an overview of your mood and emotional distribution over time. You can also quickly add your current mood from here."
+            )
+            "Mood Tracker" -> InfoContent(
+                title = "Mood Tracker",
+                text = "Track your daily mood with a simple rating and a note. Saving your mood helps you monitor your emotional trends and patterns."
+            )
+            "Sleep Tracker" -> InfoContent(
+                title = "Sleep Tracker",
+                text = "Log your sleep hours for each day of the week. This tracker helps you visualize your sleep patterns and maintain a healthy sleep schedule."
+            )
+            "Diary" -> InfoContent(
+                title = "Diary",
+                text = "A private space for your thoughts. You can add new entries, edit existing ones, or delete them. Each entry is tagged with your mood for that day."
+            )
+            "Settings" -> InfoContent(
+                title = "Settings",
+                text = "Customize your app experience. Choose a color theme that suits your mood and preferences."
+            )
+            else -> InfoContent(title = "", text = "") // Default for pages without a specific info.
+        }
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -106,7 +133,7 @@ fun MainScreen() {
                         IconButton(onClick = { /* Profile Action */ }) {
                             Icon(Icons.Default.Person, contentDescription = "Profile", tint = darkColor)
                         }
-                        IconButton(onClick = { /* Info Action */ }) {
+                        IconButton(onClick = { showInfoDialog = true }) {
                             Icon(Icons.Default.Info, contentDescription = "Info", tint = darkColor)
                         }
                     }
@@ -157,6 +184,14 @@ fun MainScreen() {
                         }
                     )
                 }
+            }
+
+            if (showInfoDialog) {
+                InfoDialog(
+                    info = infoContent,
+                    darkColor = darkColor,
+                    onDismiss = { showInfoDialog = false }
+                )
             }
         }
     }
