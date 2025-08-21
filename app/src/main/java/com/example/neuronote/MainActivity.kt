@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
@@ -21,6 +22,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val context = LocalContext.current
+
+            // Load all data when the app starts
+            AppThemeManager.loadTheme(context)
+            DiaryDataManager.loadEntries(context)
+            MoodDataManager.loadData(context)
+            SleepDataManager.loadData(context)
+
             NeuroNoteTheme {
                 MainScreen()
             }
@@ -37,7 +46,8 @@ fun MainScreen() {
     var diaryEntryToEdit by remember { mutableStateOf<DiaryEntry?>(null) }
     var showInfoDialog by remember { mutableStateOf(false) }
 
-    // observe theme manager values
+    val context = LocalContext.current // Get context once
+
     val lightColor by AppThemeManager.lightColor
     val darkColor by AppThemeManager.darkColor
 
@@ -63,7 +73,7 @@ fun MainScreen() {
                 title = "Settings",
                 text = "Customize your app experience. Choose a color theme that suits your mood and preferences."
             )
-            else -> InfoContent(title = "", text = "") // Default for pages without a specific info.
+            else -> InfoContent(title = "", text = "")
         }
     }
 

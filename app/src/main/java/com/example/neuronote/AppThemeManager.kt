@@ -1,18 +1,37 @@
 package com.example.neuronote
 
+import android.content.Context
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 
 object AppThemeManager {
+    private const val PREFS_NAME = "AppThemePrefs"
+    private const val KEY_LIGHT_COLOR = "light_color"
+    private const val KEY_DARK_COLOR = "dark_color"
+
     private val _lightColor = mutableStateOf(Color(0xFFC8E6C9)) // default light
     private val _darkColor = mutableStateOf(Color(0xFF388E3C))  // default dark
 
     val lightColor: State<Color> get() = _lightColor
     val darkColor: State<Color> get() = _darkColor
 
-    fun updateTheme(light: Color, dark: Color) {
+    fun loadTheme(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val savedLightColor = prefs.getInt(KEY_LIGHT_COLOR, Color(0xFFC8E6C9).toArgb())
+        val savedDarkColor = prefs.getInt(KEY_DARK_COLOR, Color(0xFF388E3C).toArgb())
+        _lightColor.value = Color(savedLightColor)
+        _darkColor.value = Color(savedDarkColor)
+    }
+
+    fun updateTheme(context: Context, light: Color, dark: Color) {
         _lightColor.value = light
         _darkColor.value = dark
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit()
+            .putInt(KEY_LIGHT_COLOR, light.toArgb())
+            .putInt(KEY_DARK_COLOR, dark.toArgb())
+            .apply()
     }
 }

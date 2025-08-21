@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    // Add the Kotlin Serialization plugin here
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.0" // Ensure this version matches your Kotlin version
 }
 
 android {
@@ -72,4 +74,7 @@ dependencies {
 
     // ✅ Java 8+ API desugaring
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
+    // Add the Kotlinx Serialization runtime library here
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 }

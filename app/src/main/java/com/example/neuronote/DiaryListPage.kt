@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import java.time.format.DateTimeFormatter
 
@@ -21,6 +22,7 @@ fun DiaryListPage(
     onOpenEntry: (DiaryEntry?) -> Unit
 ) {
     val entries = DiaryDataManager.entries
+    val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (entries.isEmpty()) {
@@ -70,7 +72,7 @@ fun DiaryListPage(
                             }
 
                             // 🗑️ Delete Button
-                            IconButton(onClick = { DiaryDataManager.removeEntry(entry.id) }) {
+                            IconButton(onClick = { DiaryDataManager.removeEntry(context, entry.id) }) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
                                     contentDescription = "Delete Entry",

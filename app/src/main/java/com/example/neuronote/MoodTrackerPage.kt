@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -17,6 +18,7 @@ import java.time.LocalDate
 fun MoodTrackerPage(darkColor: Color, lightColor: Color, onDone: () -> Unit) {
     var mood by remember { mutableStateOf(3) }
     var note by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     val moodEmojis = listOf("😢", "😟", "😐", "😊", "😁")
     val moodLabels = listOf("Very Sad", "Sad", "Neutral", "Happy", "Very Happy")
@@ -36,7 +38,7 @@ fun MoodTrackerPage(darkColor: Color, lightColor: Color, onDone: () -> Unit) {
         Spacer(modifier = Modifier.weight(1f))
 
         Button(onClick = {
-            MoodDataManager.addDailyMood(mood, LocalDate.now(), note.ifBlank { null })
+            MoodDataManager.addDailyMood(context, mood, LocalDate.now(), note.ifBlank { null })
             note = ""
             onDone()
         }, colors = ButtonDefaults.buttonColors(containerColor = darkColor), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {

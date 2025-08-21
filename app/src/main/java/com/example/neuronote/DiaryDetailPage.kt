@@ -5,12 +5,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
-fun DiaryDetailPage(darkColor: androidx.compose.ui.graphics.Color, lightColor: androidx.compose.ui.graphics.Color, entry: DiaryEntry?, onSave: () -> Unit) {
+fun DiaryDetailPage(darkColor: Color, lightColor: Color, entry: DiaryEntry?, onSave: () -> Unit) {
     var title by remember { mutableStateOf(entry?.title ?: "") }
     var mood by remember { mutableStateOf(entry?.mood ?: 3) }
     var content by remember { mutableStateOf(entry?.content ?: "") }
+    val context = LocalContext.current
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth())
@@ -27,13 +30,13 @@ fun DiaryDetailPage(darkColor: androidx.compose.ui.graphics.Color, lightColor: a
 
         Button(onClick = {
             if (entry == null) {
-                DiaryDataManager.addEntry(DiaryEntry(title = title.ifBlank { "Untitled" }, mood = mood, content = content))
+                DiaryDataManager.addEntry(context, DiaryEntry(title = title.ifBlank { "Untitled" }, mood = mood, content = content))
             } else {
-                DiaryDataManager.updateEntry(entry.copy(title = title.ifBlank { "Untitled" }, mood = mood, content = content))
+                DiaryDataManager.updateEntry(context, entry.copy(title = title.ifBlank { "Untitled" }, mood = mood, content = content))
             }
             onSave()
         }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = darkColor)) {
-            Text("Save", color = androidx.compose.ui.graphics.Color.White)
+            Text("Save", color = Color.White)
         }
     }
 }

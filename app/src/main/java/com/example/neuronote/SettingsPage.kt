@@ -10,13 +10,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
-// Define a new data class to hold the theme information
 data class ColorTheme(val lightColor: Color, val darkColor: Color, val name: String)
 
 @Composable
 fun SettingsPage(darkColor: Color, lightColor: Color) {
+    val context = LocalContext.current // Get the current context
+
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text(
             text = "Choose Color Theme",
@@ -41,7 +43,7 @@ fun SettingsPage(darkColor: Color, lightColor: Color) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { AppThemeManager.updateTheme(theme.lightColor, theme.darkColor) },
+                        .clickable { AppThemeManager.updateTheme(context, theme.lightColor, theme.darkColor) },
                     colors = CardDefaults.cardColors(containerColor = theme.lightColor)
                 ) {
                     Row(

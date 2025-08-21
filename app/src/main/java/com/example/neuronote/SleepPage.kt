@@ -70,7 +70,7 @@ fun AddSleepDialog(darkColor: Color, lightColor: Color, onDismiss: () -> Unit) {
     var selectedHours by remember { mutableStateOf<Int?>(null) }
 
     val context = LocalContext.current
-    val hoursOptions = (0..12).toList() // dropdown 0–12 hours
+    val hoursOptions = (0..12).toList()
 
     // Limit selection to this week
     val mondayOfWeek = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
@@ -147,7 +147,7 @@ fun AddSleepDialog(darkColor: Color, lightColor: Color, onDismiss: () -> Unit) {
         confirmButton = {
             TextButton(onClick = {
                 if (selectedHours != null) {
-                    SleepDataManager.addSleepEntry(selectedDate, selectedHours!!)
+                    SleepDataManager.addSleepEntry(context, selectedDate, selectedHours!!)
                     onDismiss()
                 }
             }) {
@@ -195,7 +195,7 @@ fun SleepBarChart(darkColor: Color, referenceDay: LocalDate, chartHeightDp: Dp) 
                 valueTextColor = AndroidColor.BLACK
                 valueTextSize = 10f
                 isHighlightEnabled = false
-                setDrawValues(false) // no clutter
+                setDrawValues(false)
             }
 
             val data = BarData(dataSet).apply {
