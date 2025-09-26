@@ -26,12 +26,12 @@ private val moodLabels = mapOf(
 )
 
 @Composable
-fun HomePage(darkColor: Color, lightColor: Color, onUpdateMoodClick: () -> Unit) {
+fun HomePage(darkColor: Color, lightColor: Color, textColor: Color, onUpdateMoodClick: () -> Unit) {
     var graphFilter by remember { mutableStateOf("Month") }
     var pieChartRange by remember { mutableStateOf("Today") }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text("Mood Over Time", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = darkColor)
+        Text("Mood Over Time", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = textColor)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Month", "Year", "All Time").forEach { filter ->
                 Button(
@@ -44,7 +44,7 @@ fun HomePage(darkColor: Color, lightColor: Color, onUpdateMoodClick: () -> Unit)
 
         Divider()
 
-        Text("Emotional Distribution", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = darkColor)
+        Text("Emotional Distribution", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = textColor)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Today", "Last 7 Days").forEach { range ->
                 Button(
@@ -60,8 +60,8 @@ fun HomePage(darkColor: Color, lightColor: Color, onUpdateMoodClick: () -> Unit)
             }
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
-                Text("Mood Breakdown", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                MoodTextBreakdown(range = pieChartRange)
+                Text("Mood Breakdown", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor)
+                MoodTextBreakdown(range = pieChartRange, textColor = textColor)
             }
         }
 
@@ -149,7 +149,7 @@ fun MoodPieChart(range: String, darkColor: Color, lightColor: Color) {
 }
 
 @Composable
-fun MoodTextBreakdown(range: String) {
+fun MoodTextBreakdown(range: String, textColor: Color) {
     val moods = if (range == "Today") MoodDataManager.dailyMoods
     else MoodDataManager.historyMoods.takeLast(7).map { DailyMood(it.averageMood.toInt().coerceIn(1,5), it.date) }
 
@@ -157,13 +157,13 @@ fun MoodTextBreakdown(range: String) {
     val total = counts.values.sum().takeIf { it > 0 } ?: 1
 
     if (counts.isEmpty()) {
-        Text("No data available", fontSize = 14.sp)
+        Text("No data available", fontSize = 14.sp, color = textColor)
     } else {
         (1..5).forEach { m ->
             val c = counts[m] ?: 0
             if (c > 0) {
                 val pct = (c.toFloat() / total) * 100
-                Text("${moodLabels[m]}: ${"%.1f".format(pct)}%", fontSize = 14.sp)
+                Text("${moodLabels[m]}: ${"%.1f".format(pct)}%", fontSize = 14.sp, color = textColor)
             }
         }
     }

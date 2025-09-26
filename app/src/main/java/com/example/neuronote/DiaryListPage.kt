@@ -11,14 +11,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun DiaryListPage(
-    darkColor: androidx.compose.ui.graphics.Color,
-    lightColor: androidx.compose.ui.graphics.Color,
+    darkColor: Color,
+    lightColor: Color,
+    textColor: Color,
     onOpenEntry: (DiaryEntry?) -> Unit
 ) {
     val entries = DiaryDataManager.entries
@@ -27,7 +29,7 @@ fun DiaryListPage(
     Box(modifier = Modifier.fillMaxSize()) {
         if (entries.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No diary entries yet")
+                Text("No diary entries yet", color = textColor)
             }
         } else {
             LazyColumn(
@@ -66,8 +68,11 @@ fun DiaryListPage(
                                     modifier = Modifier.padding(end = 12.dp)
                                 )
                                 Column {
-                                    Text(entry.title, style = MaterialTheme.typography.titleMedium)
-                                    Text(entry.date.toLocalDate().format(DateTimeFormatter.ISO_DATE))
+                                    Text(entry.title, style = MaterialTheme.typography.titleMedium, color = textColor)
+                                    Text(
+                                        entry.date.toLocalDate().format(DateTimeFormatter.ISO_DATE),
+                                        color = textColor.copy(alpha = 0.7f)
+                                    )
                                 }
                             }
 
@@ -95,7 +100,7 @@ fun DiaryListPage(
             Icon(
                 Icons.Filled.Add,
                 contentDescription = "Add",
-                tint = androidx.compose.ui.graphics.Color.White
+                tint = Color.White
             )
         }
     }

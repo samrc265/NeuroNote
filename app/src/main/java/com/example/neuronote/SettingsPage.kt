@@ -16,13 +16,13 @@ import androidx.compose.ui.unit.dp
 data class ColorTheme(val lightColor: Color, val darkColor: Color, val name: String)
 
 @Composable
-fun SettingsPage(darkColor: Color, lightColor: Color) {
-    val context = LocalContext.current // Get the current context
+fun SettingsPage(textColor: Color, lightColor: Color) {
+    val context = LocalContext.current
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text(
             text = "Choose Color Theme",
-            color = darkColor,
+            color = textColor,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
@@ -58,7 +58,7 @@ fun SettingsPage(darkColor: Color, lightColor: Color) {
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
                             text = theme.name,
-                            color = theme.darkColor
+                            color = theme.darkColor // Use the theme's own dark color for contrast on its light card
                         )
                     }
                 }

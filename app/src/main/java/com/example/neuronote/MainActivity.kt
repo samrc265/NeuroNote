@@ -6,9 +6,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,13 +23,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val context = LocalContext.current
+            // Load theme first to prevent UI flicker
+            AppThemeManager.loadTheme(this)
 
-            // Load all data when the app starts
-            AppThemeManager.loadTheme(context)
-            DiaryDataManager.loadEntries(context)
-            MoodDataManager.loadData(context)
-            SleepDataManager.loadData(context)
+            // Load data after
+            DiaryDataManager.loadEntries(this)
+            MoodDataManager.loadData(this)
+            SleepDataManager.loadData(this)
 
             NeuroNoteTheme {
                 MainScreen()
@@ -46,10 +47,19 @@ fun MainScreen() {
     var diaryEntryToEdit by remember { mutableStateOf<DiaryEntry?>(null) }
     var showInfoDialog by remember { mutableStateOf(false) }
 
-    val context = LocalContext.current // Get context once
+    val context = LocalContext.current
 
-    val lightColor by AppThemeManager.lightColor
-    val darkColor by AppThemeManager.darkColor
+    // Observe theme states from the manager
+    val lightColorTheme by AppThemeManager.lightColor
+    val darkColorTheme by AppThemeManager.darkColor
+    val isDark by AppThemeManager.isDarkTheme
+
+    // Define colors based on the current theme mode (light/dark)
+    val backgroundColor = if (isDark) Color(0xFF121212) else lightColorTheme
+    val primaryColor = darkColorTheme
+    val cardColor = if (isDark) Color(0xFF1E1E1E) else lightColorTheme
+    val textColor = if (isDark) Color.White.copy(alpha = 0.9f) else darkColorTheme
+    val topBarColor = if (isDark) Color(0xFF222222) else Color.White.copy(alpha = 0.95f)
 
     val infoContent = remember(currentPage) {
         when (currentPage) {
@@ -80,52 +90,57 @@ fun MainScreen() {
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet {
+            ModalDrawerSheet(drawerContainerColor = backgroundColor) {
                 Text(
                     "NeuroNote",
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.titleLarge,
-                    color = darkColor
+                    color = textColor
                 )
                 NavigationDrawerItem(
-                    label = { Text("Home") },
+                    label = { Text("Home", color = textColor) },
                     selected = currentPage == "Home",
                     onClick = {
                         currentPage = "Home"
                         scope.launch { drawerState.close() }
-                    }
+                    },
+                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
                 )
                 NavigationDrawerItem(
-                    label = { Text("Mood Tracker") },
+                    label = { Text("Mood Tracker", color = textColor) },
                     selected = currentPage == "Mood Tracker",
                     onClick = {
                         currentPage = "Mood Tracker"
                         scope.launch { drawerState.close() }
-                    }
+                    },
+                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
                 )
                 NavigationDrawerItem(
-                    label = { Text("Sleep Tracker") },
+                    label = { Text("Sleep Tracker", color = textColor) },
                     selected = currentPage == "Sleep Tracker",
                     onClick = {
                         currentPage = "Sleep Tracker"
                         scope.launch { drawerState.close() }
-                    }
+                    },
+                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
                 )
                 NavigationDrawerItem(
-                    label = { Text("Diary") },
+                    label = { Text("Diary", color = textColor) },
                     selected = currentPage == "Diary",
                     onClick = {
                         currentPage = "Diary"
                         scope.launch { drawerState.close() }
-                    }
+                    },
+                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
                 )
                 NavigationDrawerItem(
-                    label = { Text("Settings") },
+                    label = { Text("Settings", color = textColor) },
                     selected = currentPage == "Settings",
                     onClick = {
                         currentPage = "Settings"
                         scope.launch { drawerState.close() }
-                    }
+                    },
+                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
                 )
             }
         }
@@ -133,20 +148,26 @@ fun MainScreen() {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(currentPage, color = darkColor) },
+                    title = { Text(currentPage, color = textColor) },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = darkColor)
+                            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = textColor)
                         }
                     },
                     actions = {
-                        IconButton(onClick = { /* Profile Action */ }) {
-                            Icon(Icons.Default.Person, contentDescription = "Profile", tint = darkColor)
+                        // Dark/Light Mode Toggle Button
+                        IconButton(onClick = { AppThemeManager.toggleTheme(context) }) {
+                            Icon(
+                                imageVector = if (isDark) Icons.Filled.LightMode else Icons.Filled.DarkMode,
+                                contentDescription = "Toggle Theme",
+                                tint = textColor
+                            )
                         }
                         IconButton(onClick = { showInfoDialog = true }) {
-                            Icon(Icons.Default.Info, contentDescription = "Info", tint = darkColor)
+                            Icon(Icons.Default.Info, contentDescription = "Info", tint = textColor)
                         }
-                    }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarColor)
                 )
             }
         ) { innerPadding ->
@@ -154,39 +175,45 @@ fun MainScreen() {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .background(lightColor),
+                    .background(backgroundColor),
                 contentAlignment = Alignment.Center
             ) {
+                // Pass the dynamically calculated colors to each page
                 when (currentPage) {
                     "Home" -> HomePage(
-                        darkColor = darkColor,
-                        lightColor = lightColor,
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor,
                         onUpdateMoodClick = { currentPage = "Mood Tracker" }
                     )
                     "Mood Tracker" -> MoodTrackerPage(
-                        darkColor = darkColor,
-                        lightColor = lightColor,
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor,
                         onDone = { currentPage = "Home" }
                     )
                     "Sleep Tracker" -> SleepPage(
-                        darkColor = darkColor,
-                        lightColor = lightColor
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor
                     )
                     "Diary" -> DiaryListPage(
-                        darkColor = darkColor,
-                        lightColor = lightColor,
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor,
                         onOpenEntry = {
                             diaryEntryToEdit = it
                             currentPage = "DiaryDetail"
                         }
                     )
                     "Settings" -> SettingsPage(
-                        darkColor = darkColor,
-                        lightColor = lightColor
+                        textColor = textColor,
+                        lightColor = cardColor
                     )
                     "DiaryDetail" -> DiaryDetailPage(
-                        darkColor = darkColor,
-                        lightColor = lightColor,
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor,
                         entry = diaryEntryToEdit,
                         onSave = {
                             currentPage = "Diary"
@@ -199,10 +226,12 @@ fun MainScreen() {
             if (showInfoDialog) {
                 InfoDialog(
                     info = infoContent,
-                    darkColor = darkColor,
+                    containerColor = cardColor,
+                    textColor = textColor,
                     onDismiss = { showInfoDialog = false }
                 )
             }
         }
     }
 }
+

@@ -64,6 +64,9 @@ dependencies {
     // ✅ MPAndroidChart from JitPack
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
+    // ✅ Added for more icons like dark/light mode toggles
+    implementation("androidx.compose.material:material-icons-extended-android:1.6.7")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

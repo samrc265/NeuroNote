@@ -10,22 +10,28 @@ import androidx.compose.ui.text.font.FontWeight
 data class InfoContent(val title: String, val text: String)
 
 @Composable
-fun InfoDialog(info: InfoContent, darkColor: Color, onDismiss: () -> Unit) {
+fun InfoDialog(
+    info: InfoContent,
+    containerColor: Color,
+    textColor: Color,
+    onDismiss: () -> Unit
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = containerColor,
         title = {
             Text(
                 text = info.title,
                 fontWeight = FontWeight.Bold,
-                color = darkColor
+                color = textColor
             )
         },
         text = {
-            Text(text = info.text, color = darkColor)
+            Text(text = info.text, color = textColor)
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("OK", color = darkColor)
+                Text("OK", color = textColor)
             }
         }
     )
