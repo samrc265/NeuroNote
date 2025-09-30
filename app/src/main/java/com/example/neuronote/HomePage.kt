@@ -11,11 +11,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.example.neuronote.data.DailyMood
+import com.example.neuronote.data.MoodDataManager
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.*
 import java.time.LocalDate
+import kotlin.collections.groupingBy
 
 private val moodLabels = mapOf(
     1 to "Very Sad",
@@ -151,7 +154,11 @@ fun MoodPieChart(range: String, darkColor: Color, lightColor: Color) {
 @Composable
 fun MoodTextBreakdown(range: String, textColor: Color) {
     val moods = if (range == "Today") MoodDataManager.dailyMoods
-    else MoodDataManager.historyMoods.takeLast(7).map { DailyMood(it.averageMood.toInt().coerceIn(1,5), it.date) }
+    else MoodDataManager.historyMoods.takeLast(7).map {
+        DailyMood(
+            it.averageMood.toInt().coerceIn(1, 5), it.date
+        )
+    }
 
     val counts = moods.groupingBy { it.mood }.eachCount()
     val total = counts.values.sum().takeIf { it > 0 } ?: 1

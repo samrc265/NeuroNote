@@ -2,18 +2,23 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    // Add the Kotlin Serialization plugin here
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.0" // Ensure this version matches your Kotlin version
+
+    // Kotlin Serialization (for your Diary JSON persistence)
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.0"
+
+    // ✅ Kapt for Room
+    id("org.jetbrains.kotlin.kapt")
 }
 
 android {
     namespace = "com.example.neuronote"
-    compileSdk = 36
+    compileSdk = 35
+    // Use 34 (latest stable) instead of 36 unless you are in preview
 
     defaultConfig {
         applicationId = "com.example.neuronote"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -57,15 +62,25 @@ dependencies {
     implementation(libs.androidx.navigation.runtime.android)
     implementation(libs.androidx.navigation.compose.android)
 
-    implementation("androidx.compose.material3:material3:1.2.0")
-    implementation("androidx.activity:activity-compose:1.9.0")
-    implementation("androidx.compose.material3:material3:1.2.1")
+    // ✅ Calendar
+    implementation("com.kizitonwose.calendar:compose:2.4.0")
 
-    // ✅ MPAndroidChart from JitPack
+    // ✅ MPAndroidChart
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
-    // ✅ Added for more icons like dark/light mode toggles
-    implementation("androidx.compose.material:material-icons-extended-android:1.6.7")
+    // ✅ Icons
+    implementation("androidx.compose.material:material-icons-extended:1.6.7")
+
+    // ✅ Room (runtime + ktx + compiler via kapt)
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
+
+    // ✅ Java 8+ API desugaring
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
+    // ✅ Kotlinx Serialization (for Diary JSON system)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -74,10 +89,4 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
-    // ✅ Java 8+ API desugaring
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
-
-    // Add the Kotlinx Serialization runtime library here
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 }

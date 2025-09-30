@@ -1,46 +1,56 @@
-package com.example.neuronote
+package com.example.neuronote.data
 
 import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import java.io.File
+import androidx.room.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
+import com.example.neuronote.SleepEntry
 
-@Serializable
-data class SleepEntry(
-    @Serializable(with = LocalDateSerializer::class) val date: LocalDate,
+@Entity(tableName = "sleep_table")
+data class SleepEntity(
+    @PrimaryKey val date: LocalDate,
     val hours: Int
 )
 
+@Dao
+interface SleepDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSleep(sleep: SleepEntity)
+
+    @Query("SELECT * FROM sleep_table ORDER BY date ASC")
+    fun getAllSleep(): kotlinx.coroutines.flow.Flow<List<SleepEntity>>
+
+    @Query("SELECT * FROM sleep_table WHERE date = :date")
+    fun getSleepByDate(date: LocalDate): kotlinx.coroutines.flow.Flow<SleepEntity?>
+}
+
 object SleepDataManager {
     val sleepData = mutableStateListOf<SleepEntry>()
-    private const val FILE_NAME = "sleep_data.json"
+    private lateinit var dao: SleepDao
 
-    fun loadData(context: Context) {
-        val file = File(context.filesDir, FILE_NAME)
-        if (file.exists()) {
-            val jsonString = file.readText()
-            sleepData.clear()
-            sleepData.addAll(Json.decodeFromString<List<SleepEntry>>(jsonString))
+    fun init(context: Context) {
+        dao = AppDatabase.getDatabase(context).sleepDao()
+        CoroutineScope(Dispatchers.IO).launch {
+            dao.getAllSleep().collect { entries ->
+                sleepData.clear()
+                sleepData.addAll(entries.map { SleepEntry(it.date, it.hours) })
+            }
         }
     }
 
-    private fun saveData(context: Context) {
-        val jsonString = Json.encodeToString(sleepData.toList())
-        val file = File(context.filesDir, FILE_NAME)
-        file.writeText(jsonString)
+    fun addSleepEntry(context: Context, date: LocalDate, hours: Int) {
+        CoroutineScope(Dispatchers.IO).launch {
+            dao.insertSleep(SleepEntity(date, hours.coerceIn(0, 24)))
+        }
     }
 
-    fun addSleepEntry(context: Context, date: LocalDate, hours: Int) {
-        val safe = hours.coerceIn(0, 24)
-        val idx = sleepData.indexOfFirst { it.date == date }
-        if (idx != -1) sleepData[idx] = SleepEntry(date, safe) else sleepData.add(SleepEntry(date, safe))
-        saveData(context)
-    }
+    fun getSleepByDate(date: LocalDate) = dao.getSleepByDate(date)
 
     fun getHoursMapForWeek(referenceDay: LocalDate = LocalDate.now()): Map<DayOfWeek, Int> {
         val monday = referenceDay.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
