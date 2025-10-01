@@ -83,6 +83,10 @@ fun MainScreen() {
                 title = "Settings",
                 text = "Customize your app experience. Choose a color theme that suits your mood and preferences."
             )
+            "Chatbot" -> InfoContent(
+                title = "Chatbot",
+                text = "Ask questions and get AI-powered answers using Gemini. Great for mood tips, journaling prompts, and general queries."
+            )
             else -> InfoContent(title = "", text = "")
         }
     }
@@ -134,6 +138,15 @@ fun MainScreen() {
                     colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
                 )
                 NavigationDrawerItem(
+                    label = { Text("Chatbot", color = textColor) },
+                    selected = currentPage == "Chatbot",
+                    onClick = {
+                        currentPage = "Chatbot"
+                        scope.launch { drawerState.close() }
+                    },
+                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+                )
+                NavigationDrawerItem(
                     label = { Text("Settings", color = textColor) },
                     selected = currentPage == "Settings",
                     onClick = {
@@ -178,7 +191,6 @@ fun MainScreen() {
                     .background(backgroundColor),
                 contentAlignment = Alignment.Center
             ) {
-                // Pass the dynamically calculated colors to each page
                 when (currentPage) {
                     "Home" -> HomePage(
                         darkColor = primaryColor,
@@ -220,6 +232,11 @@ fun MainScreen() {
                             diaryEntryToEdit = null
                         }
                     )
+                    "Chatbot" -> ChatbotPage(
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor
+                    )
                 }
             }
 
@@ -234,4 +251,3 @@ fun MainScreen() {
         }
     }
 }
-

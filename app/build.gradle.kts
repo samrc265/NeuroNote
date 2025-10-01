@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.implementation
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -11,6 +13,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
+        buildConfigField("String", "GEMINI_API_KEY", "\"${property("GEMINI_API_KEY")}\"")
         applicationId = "com.example.neuronote"
         minSdk = 24
         targetSdk = 36
@@ -42,10 +45,12 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
 dependencies {
+    implementation ("com.google.ai.client.generativeai:generativeai:0.9.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -66,6 +71,7 @@ dependencies {
 
     // ✅ Added for more icons like dark/light mode toggles
     implementation("androidx.compose.material:material-icons-extended-android:1.6.7")
+    implementation(libs.generativeai)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
