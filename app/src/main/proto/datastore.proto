@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+option java_package = "com.example.neuronote.datastore";
+option java_multiple_files = true;
+
+// Stores the state of the entire Mood tracking system
+message MoodData {
+  repeated DailyMoodEntry daily_moods = 1;
+  repeated HistoryMoodEntry history_moods = 2;
+}
+
+// Stores a single day's sleep entry
+message SleepData {
+  repeated SleepEntry sleep_entries = 1;
+}
+
+// Represents an individual mood entry (multiple per day)
+message DailyMoodEntry {
+  int32 mood = 1;
+  string date = 2; // ISO Date String (yyyy-MM-dd)
+  optional string note = 3;
+}
+
+// Represents an archived, averaged mood entry (one per day)
+message HistoryMoodEntry {
+  string date = 1; // ISO Date String (yyyy-MM-dd)
+  double average_mood = 2;
+  repeated string notes = 3;
+}
+
+// Represents a single sleep log (one per day)
+message SleepEntry {
+  string date = 1; // ISO Date String (yyyy-MM-dd)
+  int32 hours = 2;
+}

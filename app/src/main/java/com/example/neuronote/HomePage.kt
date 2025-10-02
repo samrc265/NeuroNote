@@ -29,7 +29,6 @@ private val moodLabels = mapOf(
 fun HomePage(darkColor: Color, lightColor: Color, textColor: Color, onUpdateMoodClick: () -> Unit) {
     var graphFilter by remember { mutableStateOf("Month") }
     var pieChartRange by remember { mutableStateOf("Today") }
-
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Mood Over Time", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = textColor)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -41,9 +40,7 @@ fun HomePage(darkColor: Color, lightColor: Color, textColor: Color, onUpdateMood
             }
         }
         MoodLineChart(filter = graphFilter)
-
         Divider()
-
         Text("Emotional Distribution", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = textColor)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Today", "Last 7 Days").forEach { range ->
@@ -53,7 +50,6 @@ fun HomePage(darkColor: Color, lightColor: Color, textColor: Color, onUpdateMood
                 ) { Text(range, color = if (pieChartRange == range) Color.White else darkColor) }
             }
         }
-
         Row(modifier = Modifier.fillMaxWidth()) {
             Box(modifier = Modifier.weight(1f)) {
                 MoodPieChart(range = pieChartRange, darkColor = darkColor, lightColor = lightColor)
@@ -64,9 +60,7 @@ fun HomePage(darkColor: Color, lightColor: Color, textColor: Color, onUpdateMood
                 MoodTextBreakdown(range = pieChartRange, textColor = textColor)
             }
         }
-
         Spacer(modifier = Modifier.weight(1f))
-
         Button(onClick = onUpdateMoodClick, colors = ButtonDefaults.buttonColors(containerColor = darkColor),
             shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
             Text("Update Current Mood", color = Color.White, fontSize = 16.sp)
@@ -76,41 +70,40 @@ fun HomePage(darkColor: Color, lightColor: Color, textColor: Color, onUpdateMood
 
 @Composable
 fun MoodLineChart(filter: String) {
-    // observe historyMoods (state list)
-    val history = MoodDataManager.historyMoods
+    val history by MoodDataManager.historyMoods
     val filtered = when (filter) {
         "Month" -> history.filter { it.date.isAfter(LocalDate.now().minusMonths(1)) }
         "Year" -> history.filter { it.date.isAfter(LocalDate.now().minusYears(1)) }
         else -> history
     }
-
-    AndroidView(factory = { ctx -> LineChart(ctx) }, update = { chart ->
+    // FIX: Explicitly name the chart parameter in the update lambda to resolve scope issue
+    AndroidView(factory = { ctx -> LineChart(ctx) }, update = { chartInstance ->
         val entries = filtered.map { Entry(it.date.dayOfYear.toFloat(), it.averageMood.toFloat()) }
         val ds = LineDataSet(entries, "Avg Mood").apply {
             color = AndroidColor.BLUE; valueTextColor = AndroidColor.BLACK; lineWidth = 2f
             setCircleColor(AndroidColor.BLUE); circleRadius = 4f
         }
-        chart.data = LineData(ds)
-        chart.xAxis.position = XAxis.XAxisPosition.BOTTOM
-        chart.axisLeft.apply {
+        chartInstance.data = LineData(ds)
+        chartInstance.xAxis.position = XAxis.XAxisPosition.BOTTOM
+        chartInstance.axisLeft.apply {
             axisMinimum = 1f; axisMaximum = 5f; granularity = 1f; setLabelCount(5, true)
         }
-        chart.axisRight.isEnabled = false
-        chart.description.isEnabled = false
-        chart.legend.isEnabled = false
-        chart.invalidate()
+        chartInstance.axisRight.isEnabled = false
+        chartInstance.description.isEnabled = false; chartInstance.legend.isEnabled = false
+        chartInstance.invalidate()
     }, modifier = Modifier.fillMaxWidth().height(200.dp))
 }
 
 @Composable
 fun MoodPieChart(range: String, darkColor: Color, lightColor: Color) {
-    val moods: List<DailyMood> = if (range == "Today") {
-        MoodDataManager.dailyMoods
-    } else {
-        // last 7 days, expand history to daily-like entries (approx)
-        MoodDataManager.historyMoods.takeLast(7).map { DailyMood(it.averageMood.toInt().coerceIn(1,5), it.date) }
-    }
+    val dailyMoods by MoodDataManager.dailyMoods
+    val historyMoods by MoodDataManager.historyMoods
 
+    val moods: List<DailyMood> = if (range == "Today") {
+        dailyMoods
+    } else {
+        historyMoods.takeLast(7).map { DailyMood(it.averageMood.toInt().coerceIn(1, 5), it.date) }
+    }
     if (moods.isEmpty()) {
         AndroidView(factory = { ctx ->
             PieChart(ctx).apply {
@@ -150,12 +143,14 @@ fun MoodPieChart(range: String, darkColor: Color, lightColor: Color) {
 
 @Composable
 fun MoodTextBreakdown(range: String, textColor: Color) {
-    val moods = if (range == "Today") MoodDataManager.dailyMoods
-    else MoodDataManager.historyMoods.takeLast(7).map { DailyMood(it.averageMood.toInt().coerceIn(1,5), it.date) }
+    val dailyMoods by MoodDataManager.dailyMoods
+    val historyMoods by MoodDataManager.historyMoods
+
+    val moods = if (range == "Today") dailyMoods
+    else historyMoods.takeLast(7).map { DailyMood(it.averageMood.toInt().coerceIn(1, 5), it.date) }
 
     val counts = moods.groupingBy { it.mood }.eachCount()
     val total = counts.values.sum().takeIf { it > 0 } ?: 1
-
     if (counts.isEmpty()) {
         Text("No data available", fontSize = 14.sp, color = textColor)
     } else {
