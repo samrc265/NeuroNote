@@ -25,7 +25,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,7 +46,6 @@ class MainActivity : ComponentActivity() {
             DiaryDataManager.loadEntries(this)
             MoodDataManager.loadData(this)
             SleepDataManager.loadData(this)
-
             NeuroNoteTheme {
                 MainScreen()
             }
@@ -67,7 +65,6 @@ fun MainScreen() {
     var showInfoDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-
     // Observe theme states from the manager
     val lightColorTheme by AppThemeManager.lightColor
     val darkColorTheme by AppThemeManager.darkColor
@@ -80,6 +77,7 @@ fun MainScreen() {
     val textColor = if (isDark) Color.White.copy(alpha = 0.9f) else darkColorTheme
     val topBarColor = if (isDark) Color(0xFF222222) else Color.White.copy(alpha = 0.95f)
 
+    // INFO CONTENT definitions
     val infoContent = remember(currentPage) {
         when (currentPage) {
             "Home" -> InfoContent(
@@ -102,6 +100,12 @@ fun MainScreen() {
                 title = "Chatbot",
                 text = "Ask questions and get AI-powered answers using Gemini. Great for mood tips, journaling prompts, and general queries."
             )
+            // START MODIFICATION: Add Recreationals Info
+            "Recreationals" -> InfoContent(
+                title = "Recreationals",
+                text = "A place for quick, mindful games designed to help you focus, relax, and take a non-heavy break. Try the Mindful Tapper for a quick moment of focus."
+            )
+            // END MODIFICATION
             "Settings" -> InfoContent(
                 title = "Settings",
                 text = "Customize your app experience. Choose a color theme that suits your mood and preferences."
@@ -125,7 +129,6 @@ fun MainScreen() {
                     style = MaterialTheme.typography.titleLarge,
                     color = textColor
                 )
-
                 NavigationDrawerItem(
                     label = { Text("Home", color = textColor) },
                     selected = currentPage == "Home",
@@ -171,8 +174,17 @@ fun MainScreen() {
                     },
                     colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
                 )
-
-                // NEW: Focus Mode entry
+                // START MODIFICATION: Add Recreationals menu item
+                NavigationDrawerItem(
+                    label = { Text("Recreationals", color = textColor) },
+                    selected = currentPage == "Recreationals" || currentPage == "TapperGame", // Highlight if on the list or any game within it
+                    onClick = {
+                        currentPage = "Recreationals"
+                        scope.launch { drawerState.close() }
+                    },
+                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+                )
+                // END MODIFICATION
                 NavigationDrawerItem(
                     label = { Text("Focus Mode", color = textColor) },
                     selected = currentPage == "Focus Mode",
@@ -182,7 +194,6 @@ fun MainScreen() {
                     },
                     colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
                 )
-
                 NavigationDrawerItem(
                     label = { Text("Settings", color = textColor) },
                     selected = currentPage == "Settings",
@@ -273,16 +284,24 @@ fun MainScreen() {
                         lightColor = cardColor,
                         textColor = textColor
                     )
-
-                    // NEW: Focus Mode route
                     "Focus Mode" -> FocusModePage(
                         darkColor = primaryColor,
                         lightColor = cardColor,
                         textColor = textColor
                     )
+                    // START MODIFICATION: Add Recreationals content route
+                    // We route all game-related IDs back to RecreationalsPage, which manages internal state.
+                    "Recreationals", "TapperGame" -> RecreationalsPage(
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor,
+                        onNavigateToGame = { gameId -> currentPage = gameId },
+                        onNavigateBack = { currentPage = "Recreationals" }
+                    )
+                    // END MODIFICATION
+                    else -> Text("Page Not Found: $currentPage", color = textColor)
                 }
             }
-
             if (showInfoDialog) {
                 InfoDialog(
                     info = infoContent,
