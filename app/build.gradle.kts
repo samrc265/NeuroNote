@@ -64,6 +64,8 @@ android {
 }
 
 dependencies {
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose")
+    implementation("androidx.compose.material:material-icons-extended")
     implementation ("com.google.ai.client.generativeai:generativeai:0.9.0")
     implementation (libs.androidx.core.ktx)
     implementation (libs.androidx.lifecycle.runtime.ktx)

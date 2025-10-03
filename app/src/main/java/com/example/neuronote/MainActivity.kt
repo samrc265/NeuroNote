@@ -4,14 +4,33 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,10 +42,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            // Load theme first to prevent UI flicker
+            // Load persisted theme/data (your existing managers)
             AppThemeManager.loadTheme(this)
-
-            // Load data after
             DiaryDataManager.loadEntries(this)
             MoodDataManager.loadData(this)
             SleepDataManager.loadData(this)
@@ -41,7 +58,9 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val drawerState = androidx.compose.material3.rememberDrawerState(
+        androidx.compose.material3.DrawerValue.Closed
+    )
     val scope = rememberCoroutineScope()
     var currentPage by remember { mutableStateOf("Home") }
     var diaryEntryToEdit by remember { mutableStateOf<DiaryEntry?>(null) }
@@ -54,7 +73,7 @@ fun MainScreen() {
     val darkColorTheme by AppThemeManager.darkColor
     val isDark by AppThemeManager.isDarkTheme
 
-    // Define colors based on the current theme mode (light/dark)
+    // Define colors based on the current theme mode
     val backgroundColor = if (isDark) Color(0xFF121212) else lightColorTheme
     val primaryColor = darkColorTheme
     val cardColor = if (isDark) Color(0xFF1E1E1E) else lightColorTheme
@@ -79,14 +98,19 @@ fun MainScreen() {
                 title = "Diary",
                 text = "A private space for your thoughts. You can add new entries, edit existing ones, or delete them. Each entry is tagged with your mood for that day."
             )
-            "Settings" -> InfoContent(
-                title = "Settings",
-                text = "Customize your app experience. Choose a color theme that suits your mood and preferences."
-            )
             "Chatbot" -> InfoContent(
                 title = "Chatbot",
                 text = "Ask questions and get AI-powered answers using Gemini. Great for mood tips, journaling prompts, and general queries."
             )
+            "Settings" -> InfoContent(
+                title = "Settings",
+                text = "Customize your app experience. Choose a color theme that suits your mood and preferences."
+            )
+            "Focus Mode" -> InfoContent(
+                title = "Focus Mode",
+                text = "Enter a distraction-free session. Pick a preset or custom timer. When enabled, the app sets your phone to Do Not Disturb (silent) and restores it when you finish."
+            )
+            "DiaryDetail" -> InfoContent(title = "Edit Entry", text = "Update your diary entry and save.")
             else -> InfoContent(title = "", text = "")
         }
     }
@@ -101,6 +125,7 @@ fun MainScreen() {
                     style = MaterialTheme.typography.titleLarge,
                     color = textColor
                 )
+
                 NavigationDrawerItem(
                     label = { Text("Home", color = textColor) },
                     selected = currentPage == "Home",
@@ -146,6 +171,18 @@ fun MainScreen() {
                     },
                     colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
                 )
+
+                // NEW: Focus Mode entry
+                NavigationDrawerItem(
+                    label = { Text("Focus Mode", color = textColor) },
+                    selected = currentPage == "Focus Mode",
+                    onClick = {
+                        currentPage = "Focus Mode"
+                        scope.launch { drawerState.close() }
+                    },
+                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+                )
+
                 NavigationDrawerItem(
                     label = { Text("Settings", color = textColor) },
                     selected = currentPage == "Settings",
@@ -164,11 +201,10 @@ fun MainScreen() {
                     title = { Text(currentPage, color = textColor) },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu", tint = textColor)
+                            Icon(Icons.Filled.Menu, contentDescription = "Menu", tint = textColor)
                         }
                     },
                     actions = {
-                        // Dark/Light Mode Toggle Button
                         IconButton(onClick = { AppThemeManager.toggleTheme(context) }) {
                             Icon(
                                 imageVector = if (isDark) Icons.Filled.LightMode else Icons.Filled.DarkMode,
@@ -177,7 +213,7 @@ fun MainScreen() {
                             )
                         }
                         IconButton(onClick = { showInfoDialog = true }) {
-                            Icon(Icons.Default.Info, contentDescription = "Info", tint = textColor)
+                            Icon(Icons.Filled.Info, contentDescription = "Info", tint = textColor)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = topBarColor)
@@ -233,6 +269,13 @@ fun MainScreen() {
                         }
                     )
                     "Chatbot" -> ChatbotPage(
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor
+                    )
+
+                    // NEW: Focus Mode route
+                    "Focus Mode" -> FocusModePage(
                         darkColor = primaryColor,
                         lightColor = cardColor,
                         textColor = textColor
