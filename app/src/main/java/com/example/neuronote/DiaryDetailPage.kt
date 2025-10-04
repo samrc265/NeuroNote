@@ -14,7 +14,6 @@ fun DiaryDetailPage(darkColor: Color, lightColor: Color, textColor: Color, entry
     var mood by remember { mutableStateOf(entry?.mood ?: 3) }
     var content by remember { mutableStateOf(entry?.content ?: "") }
     val context = LocalContext.current
-
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedTextColor = textColor,
         unfocusedTextColor = textColor,
@@ -26,7 +25,6 @@ fun DiaryDetailPage(darkColor: Color, lightColor: Color, textColor: Color, entry
         focusedContainerColor = lightColor,
         unfocusedContainerColor = lightColor
     )
-
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedTextField(
             value = title,
@@ -35,9 +33,8 @@ fun DiaryDetailPage(darkColor: Color, lightColor: Color, textColor: Color, entry
             modifier = Modifier.fillMaxWidth(),
             colors = textFieldColors
         )
-
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            listOf(1 to "😢", 2 to "☹️", 3 to "😐", 4 to "🙂", 5 to "😁").forEach { (value, emoji) ->
+            listOf(1 to " 😢 ", 2 to " ☹️", 3 to " 😐 ", 4 to " 🙂 ", 5 to " 😁 ").forEach { (value, emoji) ->
                 Button(
                     onClick = { mood = value },
                     colors = ButtonDefaults.buttonColors(containerColor = if (mood == value) darkColor else lightColor)
@@ -46,7 +43,6 @@ fun DiaryDetailPage(darkColor: Color, lightColor: Color, textColor: Color, entry
                 }
             }
         }
-
         OutlinedTextField(
             value = content,
             onValueChange = { content = it },
@@ -55,15 +51,18 @@ fun DiaryDetailPage(darkColor: Color, lightColor: Color, textColor: Color, entry
             maxLines = Int.MAX_VALUE,
             colors = textFieldColors
         )
-
-        Button(onClick = {
-            if (entry == null) {
-                DiaryDataManager.addEntry(context, DiaryEntry(title = title.ifBlank { "Untitled" }, mood = mood, content = content))
-            } else {
-                DiaryDataManager.updateEntry(context, entry.copy(title = title.ifBlank { "Untitled" }, mood = mood, content = content))
-            }
-            onSave()
-        }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = darkColor)) {
+        Button(
+            onClick = {
+                if (entry == null) {
+                    DiaryDataManager.addEntry(context, DiaryEntry(title = title.ifBlank { "Untitled" }, mood = mood, content = content))
+                } else {
+                    DiaryDataManager.updateEntry(context, entry.copy(title = title.ifBlank { "Untitled" }, mood = mood, content = content))
+                }
+                onSave()
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = darkColor)
+        ) {
             Text("Save", color = Color.White)
         }
     }

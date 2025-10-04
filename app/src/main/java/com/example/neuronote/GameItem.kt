@@ -3,6 +3,7 @@ package com.example.neuronote
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -71,17 +72,17 @@ fun RecreationalsPage(
 ) {
     // Current state can be "GameList" or a specific game ID like "TapperGame"
     var currentPage by remember { mutableStateOf("GameList") }
-
     when (currentPage) {
         "GameList" -> GameListPage(
             darkColor = darkColor,
+            lightColor = lightColor,
             textColor = textColor,
-            onGameSelect = { id -> currentPage = id } // Internal switch to the game screen
+            onGameSelect = { id -> currentPage = id }  // Internal switch to the game screen
         )
         "TapperGame" -> TapperGame(
             darkColor = darkColor,
             textColor = textColor,
-            onFinish = { currentPage = "GameList" } // Navigates back to the list
+            onFinish = { currentPage = "GameList" }  // Navigates back to the list
         )
         "HoldGame" -> HoldGame( // Game function is in TapperGame.kt
             darkColor = darkColor,
@@ -100,6 +101,7 @@ fun RecreationalsPage(
 @Composable
 fun GameListPage(
     darkColor: Color,
+    lightColor: Color,
     textColor: Color,
     onGameSelect: (String) -> Unit
 ) {
@@ -118,12 +120,12 @@ fun GameListPage(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
-
         items(gameList) { game ->
             Card(
-                colors = CardDefaults.cardColors(containerColor = darkColor.copy(alpha = 0.1f)),
+                colors = CardDefaults.cardColors(containerColor = lightColor),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .border(1.dp, darkColor.copy(alpha = 0.5f), MaterialTheme.shapes.medium)
                     .clickable { onGameSelect(game.id) }
             ) {
                 Row(
@@ -157,20 +159,17 @@ fun GameListPage(
 // =========================================================================
 // SEQUENCE RECALL / MEMORY GAME (Complete Logic)
 // =========================================================================
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MemoryGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
     val maxDots = 3
     val dotColors = remember { listOf(Color.Red, Color.Blue, Color.Green) }
     val dotSize = 80.dp
-
     var currentRound by remember { mutableStateOf(1) }
-    var gameStage by remember { mutableStateOf("Ready") } // Ready, Watch, Repeat, Fail
+    var gameStage by remember { mutableStateOf("Ready") }  // Ready, Watch, Repeat, Fail
     var sequence by remember { mutableStateOf(listOf<Int>()) }
     var playerInput by remember { mutableStateOf(listOf<Int>()) }
     var message by remember { mutableStateOf("Focus to begin...") }
-
     val dotPulseScales = List(maxDots) { remember { Animatable(1f) } }
     val scope = rememberCoroutineScope()
 
@@ -180,13 +179,10 @@ fun MemoryGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
             gameStage = "Watch"
             message = "Watch Carefully..."
             playerInput = emptyList()
-
             // 1. Generate new sequence (add one more dot)
             val newDot = Random.nextInt(0, maxDots)
             sequence = sequence + newDot
-
             delay(1500) // Pause before showing sequence
-
             // 2. Play the sequence
             for (dotIndex in sequence) {
                 scope.launch {
@@ -196,7 +192,6 @@ fun MemoryGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
                 }
                 delay(700) // Time per flash
             }
-
             // 3. Transition to player turn
             gameStage = "Repeat"
             message = "Your Turn: Tap in order."
@@ -206,26 +201,22 @@ fun MemoryGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
     // Handles the player tapping a dot
     fun handleTap(index: Int) {
         if (gameStage != "Repeat") return
-
         playerInput = playerInput + index
-
         // 1. Give visual feedback
         scope.launch {
             dotPulseScales[index].animateTo(1.2f, tween(100))
             dotPulseScales[index].animateTo(1f, tween(100))
         }
-
         // 2. Check if the tap is incorrect
         if (playerInput.last() != sequence[playerInput.lastIndex]) {
-            message = "❌ Incorrect! Try Again."
+            message = " ❌  Incorrect! Try Again."
             gameStage = "Fail"
             return
         }
-
         // 3. Check if the sequence is complete and correct
         if (playerInput.size == sequence.size) {
             currentRound++
-            message = "✅ Success! Round $currentRound."
+            message = " ✅  Success! Round $currentRound."
             scope.launch {
                 delay(1000)
                 startNextRound()
@@ -263,10 +254,9 @@ fun MemoryGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceAround
         ) {
-
             Text(
                 message,
-                color = textColor,
+                color = textColor, // FIX: Ensure text color is textColor for maximum visibility
                 style = MaterialTheme.typography.titleLarge,
                 minLines = 2,
                 textAlign = TextAlign.Center,
@@ -274,10 +264,9 @@ fun MemoryGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
             )
             Text(
                 "Round: $currentRound | Length: ${sequence.size}",
-                color = textColor.copy(alpha = 0.6f),
+                color = textColor.copy(alpha = 0.8f), // FIX: Ensure text color is based on textColor for visibility
                 style = MaterialTheme.typography.bodyLarge
             )
-
             // --- The Tappable Dot Area ---
             Row(
                 modifier = Modifier.fillMaxWidth().height(dotSize * 1.5f),
@@ -292,7 +281,6 @@ fun MemoryGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
                     )
                 }
             }
-
             // --- Control Buttons ---
             if (gameStage == "Ready") {
                 Button(

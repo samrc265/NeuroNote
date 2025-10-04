@@ -35,11 +35,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.neuronote.ui.theme.NeuroNoteTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             // Load persisted theme/data (your existing managers)
             AppThemeManager.loadTheme(this)
@@ -63,8 +65,8 @@ fun MainScreen() {
     var currentPage by remember { mutableStateOf("Home") }
     var diaryEntryToEdit by remember { mutableStateOf<DiaryEntry?>(null) }
     var showInfoDialog by remember { mutableStateOf(false) }
-
     val context = LocalContext.current
+
     // Observe theme states from the manager
     val lightColorTheme by AppThemeManager.lightColor
     val darkColorTheme by AppThemeManager.darkColor
@@ -119,6 +121,18 @@ fun MainScreen() {
         }
     }
 
+    // START FIX: Define explicit drawer item colors for high contrast in dark mode
+    val drawerItemColors = NavigationDrawerItemDefaults.colors(
+        // Selected state: Use a transparent accent color for background and the full accent color for text
+        selectedContainerColor = primaryColor.copy(alpha = 0.15f),
+        selectedTextColor = primaryColor,
+        selectedIconColor = primaryColor,
+        // Unselected state: Use the standard text color on a transparent background
+        unselectedTextColor = textColor,
+        unselectedContainerColor = Color.Transparent
+    )
+    // END FIX
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -136,7 +150,8 @@ fun MainScreen() {
                         currentPage = "Home"
                         scope.launch { drawerState.close() }
                     },
-                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+                    // FIX: Apply high-contrast colors
+                    colors = drawerItemColors
                 )
                 NavigationDrawerItem(
                     label = { Text("Mood Tracker", color = textColor) },
@@ -145,7 +160,8 @@ fun MainScreen() {
                         currentPage = "Mood Tracker"
                         scope.launch { drawerState.close() }
                     },
-                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+                    // FIX: Apply high-contrast colors
+                    colors = drawerItemColors
                 )
                 NavigationDrawerItem(
                     label = { Text("Sleep Tracker", color = textColor) },
@@ -154,7 +170,8 @@ fun MainScreen() {
                         currentPage = "Sleep Tracker"
                         scope.launch { drawerState.close() }
                     },
-                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+                    // FIX: Apply high-contrast colors
+                    colors = drawerItemColors
                 )
                 NavigationDrawerItem(
                     label = { Text("Diary", color = textColor) },
@@ -163,7 +180,8 @@ fun MainScreen() {
                         currentPage = "Diary"
                         scope.launch { drawerState.close() }
                     },
-                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+                    // FIX: Apply high-contrast colors
+                    colors = drawerItemColors
                 )
                 NavigationDrawerItem(
                     label = { Text("Chatbot", color = textColor) },
@@ -172,7 +190,8 @@ fun MainScreen() {
                         currentPage = "Chatbot"
                         scope.launch { drawerState.close() }
                     },
-                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+                    // FIX: Apply high-contrast colors
+                    colors = drawerItemColors
                 )
                 // START MODIFICATION: Add Recreationals menu item
                 NavigationDrawerItem(
@@ -182,7 +201,8 @@ fun MainScreen() {
                         currentPage = "Recreationals"
                         scope.launch { drawerState.close() }
                     },
-                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+                    // FIX: Apply high-contrast colors
+                    colors = drawerItemColors
                 )
                 // END MODIFICATION
                 NavigationDrawerItem(
@@ -192,7 +212,8 @@ fun MainScreen() {
                         currentPage = "Focus Mode"
                         scope.launch { drawerState.close() }
                     },
-                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+                    // FIX: Apply high-contrast colors
+                    colors = drawerItemColors
                 )
                 NavigationDrawerItem(
                     label = { Text("Settings", color = textColor) },
@@ -201,7 +222,8 @@ fun MainScreen() {
                         currentPage = "Settings"
                         scope.launch { drawerState.close() }
                     },
-                    colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+                    // FIX: Apply high-contrast colors
+                    colors = drawerItemColors
                 )
             }
         }
@@ -291,7 +313,7 @@ fun MainScreen() {
                     )
                     // START MODIFICATION: Add Recreationals content route
                     // We route all game-related IDs back to RecreationalsPage, which manages internal state.
-                    "Recreationals", "TapperGame" -> RecreationalsPage(
+                    "Recreationals", "TapperGame", "HoldGame", "MemoryGame" -> RecreationalsPage(
                         darkColor = primaryColor,
                         lightColor = cardColor,
                         textColor = textColor,

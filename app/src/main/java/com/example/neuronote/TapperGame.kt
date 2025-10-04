@@ -11,7 +11,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState // New: U
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack // New: Used in TheHoldGame
+import androidx.compose.material.icons.automirrored.filled.ArrowBack  // New: Used in TheHoldGame
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,7 +33,6 @@ fun Double.format(digits: Int) = "%.${digits}f".format(this)
 // =========================================================================
 // 1. MINDFUL TAPPER GAME (Original)
 // =========================================================================
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TapperGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
@@ -56,13 +55,11 @@ fun TapperGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
 
     fun handleTap() {
         if (!gameActive) return
-
         tapsRemaining--
         scope.launch {
             pulseScale.snapTo(1.2f)
             pulseScale.animateTo(1.1f, tween(150))
         }
-
         if (tapsRemaining <= 0) {
             gameActive = false
         }
@@ -105,26 +102,33 @@ fun TapperGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
                     fontWeight = FontWeight.ExtraBold
                 )
                 Spacer(Modifier.height(32.dp))
-
-                Box(
+                // FIX: Replaced Box with Surface for elevation and modern look
+                Surface(
                     modifier = Modifier
                         .size(160.dp)
-                        .graphicsLayer(scaleX = pulseScale.value, scaleY = pulseScale.value)
-                        .clip(CircleShape)
-                        .background(darkColor)
-                        .clickable(
-                            onClick = ::handleTap,
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() }
-                        ),
-                    contentAlignment = Alignment.Center
+                        .graphicsLayer(scaleX = pulseScale.value, scaleY = pulseScale.value),
+                    shape = CircleShape,
+                    color = darkColor,
+                    shadowElevation = 8.dp, // Added shadow
+                    tonalElevation = 4.dp // Added tonal elevation
                 ) {
-                    Text(
-                        text = "Tap",
-                        color = Color.White,
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable(
+                                onClick = ::handleTap,
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Tap",
+                            color = Color.White,
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
                 Spacer(Modifier.height(32.dp))
                 Text(
@@ -132,7 +136,6 @@ fun TapperGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
                     color = textColor.copy(alpha = 0.6f),
                     style = MaterialTheme.typography.bodyMedium
                 )
-
             } else {
                 Text(
                     "🧘 Focus Achieved!",
@@ -161,7 +164,6 @@ fun TapperGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
 // =========================================================================
 // 2. THE HOLD GAME (Complete Logic)
 // =========================================================================
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun HoldGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
@@ -171,7 +173,6 @@ fun HoldGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
     var resultText by remember { mutableStateOf("Press and HOLD the circle.") }
     var gameActive by remember { mutableStateOf(true) }
     var isHolding by remember { mutableStateOf(false) }
-
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scope = rememberCoroutineScope()
@@ -179,7 +180,6 @@ fun HoldGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
 
     LaunchedEffect(isPressed) {
         if (!gameActive) return@LaunchedEffect
-
         if (isPressed) {
             isHolding = true
             resultText = "HOLDING..."
@@ -188,20 +188,16 @@ fun HoldGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
         } else if (isHolding) {
             isHolding = false
             pulseScale.animateTo(1f, tween(300))
-
             val releaseTime = System.currentTimeMillis()
             val actualHoldTime = releaseTime - startTime
-
             val difference = abs(actualHoldTime - targetHoldTime)
             val actualHoldSeconds = actualHoldTime / 1000.0
-
             val message = when {
-                difference <= 300 -> "🌟 Perfect! (${actualHoldSeconds.format(2)}s)"
-                difference <= 700 -> "✨ Great focus! (${actualHoldSeconds.format(2)}s)"
-                difference <= 1500 -> "🧘 Good attempt. (${actualHoldSeconds.format(2)}s)"
-                else -> "😴 Lost focus. (${actualHoldSeconds.format(2)}s)"
+                difference <= 300 -> " 🌟  Perfect!\n(${actualHoldSeconds.format(2)}s)"
+                difference <= 700 -> " ✨  Great focus!\n(${actualHoldSeconds.format(2)}s)"
+                difference <= 1500 -> "🧘 Good attempt.\n(${actualHoldSeconds.format(2)}s)"
+                else -> " 😴  Lost focus.\n(${actualHoldSeconds.format(2)}s)"
             }
-
             resultText = message
             gameActive = false
         }
@@ -235,14 +231,12 @@ fun HoldGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
-
             Text(
                 "Objective: Hold the circle for the **perfect, unknown amount of time**.",
                 color = textColor.copy(alpha = 0.8f),
                 style = MaterialTheme.typography.titleMedium,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
-
             // --- Game Message ---
             Text(
                 resultText,
@@ -252,30 +246,36 @@ fun HoldGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.heightIn(min = 60.dp)
             )
-
             // --- The Tappable Circle (The Hold Button) ---
-            Box(
+            // FIX: Replaced Box with Surface for elevation and modern look
+            Surface(
                 modifier = Modifier
                     .size(200.dp)
-                    .graphicsLayer(scaleX = pulseScale.value, scaleY = pulseScale.value)
-                    .clip(CircleShape)
-                    .background(darkColor)
-                    .combinedClickable(
-                        interactionSource = interactionSource,
-                        indication = null,
-                        onClick = { /* No action on simple click */ },
-                        onLongClick = { /* No action on long click */ }
-                    ),
-                contentAlignment = Alignment.Center
+                    .graphicsLayer(scaleX = pulseScale.value, scaleY = pulseScale.value),
+                shape = CircleShape,
+                color = darkColor,
+                shadowElevation = 12.dp, // Added strong shadow
+                tonalElevation = 6.dp // Added tonal elevation
             ) {
-                Text(
-                    text = if (isHolding) "HOLD!" else if (gameActive) "START" else "DONE",
-                    color = Color.White,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .combinedClickable(
+                            interactionSource = interactionSource,
+                            indication = null,
+                            onClick = { /* No action on simple click */ },
+                            onLongClick = { /* No action on long click */ }
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (isHolding) "HOLD!" else if (gameActive) "START" else "DONE",
+                        color = Color.White,
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
             }
-
             // --- Bottom Instructions / Retry Button ---
             if (gameActive) {
                 Text(
@@ -289,7 +289,8 @@ fun HoldGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
                     onClick = onFinish,
                     colors = ButtonDefaults.buttonColors(containerColor = darkColor)
                 ) {
-                    Text("Continue")
+                    // FIX: Changed button text to clearly indicate navigating back to the list
+                    Text("Back to Recreations")
                 }
             }
         }

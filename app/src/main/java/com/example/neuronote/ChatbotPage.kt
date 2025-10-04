@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
@@ -56,11 +57,9 @@ fun ChatbotPage(
     var input by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-
-    // ✅ Scroll state for simple, reliable scrolling even with giant messages
+    //  ✅  Scroll state for simple, reliable scrolling even with giant messages
     val scrollState = rememberScrollState()
-
-    // ✅ Auto-scroll whenever message count changes
+    //  ✅  Auto-scroll whenever message count changes
     LaunchedEffect(messages.size) {
         // jump first to avoid long animation on huge diffs
         scrollState.scrollTo(scrollState.maxValue)
@@ -79,10 +78,8 @@ fun ChatbotPage(
             style = MaterialTheme.typography.bodyMedium,
             color = textColor.copy(alpha = 0.8f)
         )
-
         Divider(color = textColor.copy(alpha = 0.2f))
-
-        // ✅ Scrollable chat area
+        //  ✅  Scrollable chat area
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -108,9 +105,11 @@ fun ChatbotPage(
                 messages.forEach { msg ->
                     val isUser = msg.role == "user"
                     Surface(
+                        // FIX: Added elevation and uniform rounded shape for a professional chat UI
+                        tonalElevation = 2.dp,
+                        shadowElevation = 1.dp,
                         color = if (isUser) darkColor else lightColor,
-                        tonalElevation = if (isUser) 2.dp else 0.dp,
-                        shape = MaterialTheme.shapes.medium,
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
@@ -121,7 +120,6 @@ fun ChatbotPage(
                         )
                     }
                 }
-
                 if (isLoading) {
                     Row(
                         modifier = Modifier
@@ -134,7 +132,6 @@ fun ChatbotPage(
                 }
             }
         }
-
         // Input row
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -160,7 +157,6 @@ fun ChatbotPage(
                     val userText = input
                     input = ""
                     messages.add(ChatMessage(role = "user", text = userText))
-
                     scope.launch {
                         isLoading = true
                         try {
@@ -173,7 +169,7 @@ fun ChatbotPage(
                             messages.add(
                                 ChatMessage(
                                     role = "assistant",
-                                    text = "⚠️ Error: ${e.message ?: "Something went wrong."}"
+                                    text = " ⚠️ Error: ${e.message ?: "Something went wrong."}"
                                 )
                             )
                         } finally {

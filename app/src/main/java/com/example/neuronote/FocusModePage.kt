@@ -33,7 +33,6 @@ fun FocusModePage(
 ) {
     val context = LocalContext.current
     val state by vm.state.collectAsState()
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -171,7 +170,6 @@ fun FocusModePage(
             ) {
                 Text("Start Custom")
             }
-
             OutlinedButton(
                 onClick = { vm.reset(context) },
                 modifier = Modifier.weight(1f),
@@ -181,7 +179,6 @@ fun FocusModePage(
                 Spacer(Modifier.width(6.dp))
                 Text("Reset")
             }
-
             IconButton(onClick = { vm.openDndSettings(context) }) {
                 Icon(
                     imageVector = Icons.Filled.Notifications,

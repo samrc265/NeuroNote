@@ -40,7 +40,7 @@ fun SleepPage(darkColor: Color, lightColor: Color, textColor: Color) {
             style = MaterialTheme.typography.headlineSmall,
             color = textColor
         )
-        SleepBarChart(darkColor = darkColor, referenceDay = LocalDate.now(), chartHeightDp = 440.dp, textColor = textColor)
+        SleepBarChart(darkColor = darkColor, lightColor = lightColor, referenceDay = LocalDate.now(), chartHeightDp = 440.dp, textColor = textColor)
         Button(
             onClick = { showDialog = true },
             colors = ButtonDefaults.buttonColors(containerColor = darkColor),
@@ -49,6 +49,7 @@ fun SleepPage(darkColor: Color, lightColor: Color, textColor: Color) {
             Text("Add / Update Sleep", color = Color.White)
         }
     }
+
     if (showDialog) {
         AddSleepDialog(
             darkColor = darkColor,
@@ -86,6 +87,7 @@ fun AddSleepDialog(darkColor: Color, lightColor: Color, textColor: Color, onDism
         dpd.datePicker.maxDate = sundayOfWeek.atStartOfDay(zone).toInstant().toEpochMilli()
         dpd.show()
     }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = lightColor,
@@ -103,6 +105,7 @@ fun AddSleepDialog(darkColor: Color, lightColor: Color, textColor: Color, onDism
                 ) {
                     Text("Date: ${selectedDate.format(DateTimeFormatter.ISO_DATE)}", color = textColor)
                 }
+
                 ExposedDropdownMenuBox(
                     expanded = expanded,
                     onExpandedChange = { expanded = !expanded }
@@ -128,6 +131,7 @@ fun AddSleepDialog(darkColor: Color, lightColor: Color, textColor: Color, onDism
                             cursorColor = darkColor
                         )
                     )
+
                     ExposedDropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false }
@@ -166,8 +170,11 @@ fun AddSleepDialog(darkColor: Color, lightColor: Color, textColor: Color, onDism
 }
 
 @Composable
-fun SleepBarChart(darkColor: Color, referenceDay: LocalDate, chartHeightDp: Dp, textColor: Color) {
+fun SleepBarChart(darkColor: Color, lightColor: Color, referenceDay: LocalDate, chartHeightDp: Dp, textColor: Color) {
     val weekMap by remember { derivedStateOf { SleepDataManager.getHoursMapForWeek(referenceDay) } }
+    // FIX: Determine today's DayOfWeek for highlighting
+    val today = LocalDate.now().dayOfWeek
+
     AndroidView(
         factory = { ctx ->
             BarChart(ctx).apply {
@@ -185,8 +192,19 @@ fun SleepBarChart(darkColor: Color, referenceDay: LocalDate, chartHeightDp: Dp, 
             val entries = days.mapIndexed { idx, day ->
                 BarEntry(idx.toFloat(), weekMap[day]?.toFloat() ?: 0f)
             }
+
+            // FIX: Create a list of colors, highlighting the current day with a contrasting light color
+            val barColors = days.map { day ->
+                if (day == today) {
+                    lightColor.toArgb() // Use the card/light background color for emphasis
+                } else {
+                    darkColor.toArgb()
+                }
+            }
+
             val dataSet = BarDataSet(entries, "Hours Slept").apply {
-                color = darkColor.toArgb()
+                // FIX: Set colors using the barColors list
+                setColors(barColors)
                 valueTextColor = textColor.toArgb()
                 valueTextSize = 10f
                 isHighlightEnabled = false
