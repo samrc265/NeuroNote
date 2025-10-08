@@ -37,10 +37,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.util.UnstableApi
 import com.example.neuronote.ui.theme.NeuroNoteTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    @androidx.annotation.OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -48,8 +50,11 @@ class MainActivity : ComponentActivity() {
         MusicPlayerManager.init(
             applicationContext,
             listOf(
-                Track("1", "Something Just Like This", "The Chainsmokers", R.raw.thechainsmokers_somethingjustlikethis),
-                Track("2", "Steal My Girl", "One Direction", R.raw.steal_my_girl)
+                Track("1", "Anger Calming Music", "NeuroNote", R.raw.angercalmingmusic),
+                Track("2", "Sleep", "NeuroNote", R.raw.sleepmusic),
+                Track("3", "Flowing River ASMR", "NeuroNote", R.raw.riverasmr),
+                Track("4", "Music For ADHD Users", "NeuroNote", R.raw.adhdcalmingmusic),
+                Track("5", "Metronome", "NeuroNote", R.raw.metronome)
             )
         )
 
