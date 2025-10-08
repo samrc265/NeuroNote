@@ -130,6 +130,11 @@ fun MainScreen() {
                 title = "Music",
                 text = "Play calming tracks while you journal or focus. The playlist uses free ambient tracks."
             )
+            // NEW: Breathing page info
+            "Breathing" -> InfoContent(
+                title = "Breathing Exercise",
+                text = "Follow a simple inhale–hold–exhale rhythm. Choose 1, 3, or 5 minutes to relax before journaling or focusing."
+            )
             "Settings" -> InfoContent(
                 title = "Settings",
                 text = "Customize your app experience. Choose a color theme that suits your mood and preferences."
@@ -177,7 +182,8 @@ fun MainScreen() {
                 drawerItem("Chatbot")
                 drawerItem("Recreationals")
                 drawerItem("Focus Mode")
-                drawerItem("Music")      // NEW entry
+                drawerItem("Music")         // existing entry
+                drawerItem("Breathing")     // 🔹 NEW entry
                 drawerItem("Settings")
             }
         }
@@ -273,8 +279,14 @@ fun MainScreen() {
                         onNavigateToGame = { gameId -> currentPage = gameId },
                         onNavigateBack = { currentPage = "Recreationals" }
                     )
-                    // NEW Music page route
+                    // Music page
                     "Music" -> MusicPage(
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor
+                    )
+                    // 🔹 NEW Breathing page route
+                    "Breathing" -> BreathingPage(
                         darkColor = primaryColor,
                         lightColor = cardColor,
                         textColor = textColor
