@@ -66,7 +66,10 @@ class FocusModeViewModel : ViewModel() {
         }
 
         val previous = nm.currentInterruptionFilter
-        nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
+
+        // ✅ Use PRIORITY instead of NONE so media playback continues
+        // (Silences most notifications without stealing media audio focus)
+        nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
 
         val total = minutes * 60
         _state.value = _state.value.copy(

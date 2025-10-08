@@ -12,18 +12,20 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,12 +44,22 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // ✅ Initialize the global music player so it survives page changes
+        MusicPlayerManager.init(
+            applicationContext,
+            listOf(
+                Track("1", "Something Just Like This", "The Chainsmokers", R.raw.thechainsmokers_somethingjustlikethis),
+                Track("2", "Steal My Girl", "One Direction", R.raw.steal_my_girl)
+            )
+        )
+
         setContent {
             // Load persisted theme/data (your existing managers)
             AppThemeManager.loadTheme(this)
             DiaryDataManager.loadEntries(this)
             MoodDataManager.loadData(this)
             SleepDataManager.loadData(this)
+
             NeuroNoteTheme {
                 MainScreen()
             }
@@ -58,9 +70,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
-    val drawerState = androidx.compose.material3.rememberDrawerState(
-        androidx.compose.material3.DrawerValue.Closed
-    )
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var currentPage by remember { mutableStateOf("Home") }
     var diaryEntryToEdit by remember { mutableStateOf<DiaryEntry?>(null) }
@@ -102,36 +112,36 @@ fun MainScreen() {
                 title = "Chatbot",
                 text = "Ask questions and get AI-powered answers using Gemini. Great for mood tips, journaling prompts, and general queries."
             )
-            // START MODIFICATION: Add Recreationals Info
             "Recreationals" -> InfoContent(
                 title = "Recreationals",
-                text = "A place for quick, mindful games designed to help you focus, relax, and take a non-heavy break. Try the Mindful Tapper for a quick moment of focus."
-            )
-            // END MODIFICATION
-            "Settings" -> InfoContent(
-                title = "Settings",
-                text = "Customize your app experience. Choose a color theme that suits your mood and preferences."
+                text = "A place for quick, mindful games designed to help you focus, relax, and take a non-heavy break."
             )
             "Focus Mode" -> InfoContent(
                 title = "Focus Mode",
                 text = "Enter a distraction-free session. Pick a preset or custom timer. When enabled, the app sets your phone to Do Not Disturb (silent) and restores it when you finish."
+            )
+            // NEW page info
+            "Music" -> InfoContent(
+                title = "Music",
+                text = "Play calming tracks while you journal or focus. The playlist uses free ambient tracks."
+            )
+            "Settings" -> InfoContent(
+                title = "Settings",
+                text = "Customize your app experience. Choose a color theme that suits your mood and preferences."
             )
             "DiaryDetail" -> InfoContent(title = "Edit Entry", text = "Update your diary entry and save.")
             else -> InfoContent(title = "", text = "")
         }
     }
 
-    // START FIX: Define explicit drawer item colors for high contrast in dark mode
+    // High-contrast drawer item colors
     val drawerItemColors = NavigationDrawerItemDefaults.colors(
-        // Selected state: Use a transparent accent color for background and the full accent color for text
         selectedContainerColor = primaryColor.copy(alpha = 0.15f),
         selectedTextColor = primaryColor,
         selectedIconColor = primaryColor,
-        // Unselected state: Use the standard text color on a transparent background
         unselectedTextColor = textColor,
         unselectedContainerColor = Color.Transparent
     )
-    // END FIX
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -143,88 +153,27 @@ fun MainScreen() {
                     style = MaterialTheme.typography.titleLarge,
                     color = textColor
                 )
-                NavigationDrawerItem(
-                    label = { Text("Home", color = textColor) },
-                    selected = currentPage == "Home",
-                    onClick = {
-                        currentPage = "Home"
-                        scope.launch { drawerState.close() }
-                    },
-                    // FIX: Apply high-contrast colors
-                    colors = drawerItemColors
-                )
-                NavigationDrawerItem(
-                    label = { Text("Mood Tracker", color = textColor) },
-                    selected = currentPage == "Mood Tracker",
-                    onClick = {
-                        currentPage = "Mood Tracker"
-                        scope.launch { drawerState.close() }
-                    },
-                    // FIX: Apply high-contrast colors
-                    colors = drawerItemColors
-                )
-                NavigationDrawerItem(
-                    label = { Text("Sleep Tracker", color = textColor) },
-                    selected = currentPage == "Sleep Tracker",
-                    onClick = {
-                        currentPage = "Sleep Tracker"
-                        scope.launch { drawerState.close() }
-                    },
-                    // FIX: Apply high-contrast colors
-                    colors = drawerItemColors
-                )
-                NavigationDrawerItem(
-                    label = { Text("Diary", color = textColor) },
-                    selected = currentPage == "Diary",
-                    onClick = {
-                        currentPage = "Diary"
-                        scope.launch { drawerState.close() }
-                    },
-                    // FIX: Apply high-contrast colors
-                    colors = drawerItemColors
-                )
-                NavigationDrawerItem(
-                    label = { Text("Chatbot", color = textColor) },
-                    selected = currentPage == "Chatbot",
-                    onClick = {
-                        currentPage = "Chatbot"
-                        scope.launch { drawerState.close() }
-                    },
-                    // FIX: Apply high-contrast colors
-                    colors = drawerItemColors
-                )
-                // START MODIFICATION: Add Recreationals menu item
-                NavigationDrawerItem(
-                    label = { Text("Recreationals", color = textColor) },
-                    selected = currentPage == "Recreationals" || currentPage == "TapperGame", // Highlight if on the list or any game within it
-                    onClick = {
-                        currentPage = "Recreationals"
-                        scope.launch { drawerState.close() }
-                    },
-                    // FIX: Apply high-contrast colors
-                    colors = drawerItemColors
-                )
-                // END MODIFICATION
-                NavigationDrawerItem(
-                    label = { Text("Focus Mode", color = textColor) },
-                    selected = currentPage == "Focus Mode",
-                    onClick = {
-                        currentPage = "Focus Mode"
-                        scope.launch { drawerState.close() }
-                    },
-                    // FIX: Apply high-contrast colors
-                    colors = drawerItemColors
-                )
-                NavigationDrawerItem(
-                    label = { Text("Settings", color = textColor) },
-                    selected = currentPage == "Settings",
-                    onClick = {
-                        currentPage = "Settings"
-                        scope.launch { drawerState.close() }
-                    },
-                    // FIX: Apply high-contrast colors
-                    colors = drawerItemColors
-                )
+                @Composable
+                fun drawerItem(label: String) {
+                    NavigationDrawerItem(
+                        label = { Text(label, color = textColor) },
+                        selected = currentPage == label,
+                        onClick = {
+                            currentPage = label
+                            scope.launch { drawerState.close() }
+                        },
+                        colors = drawerItemColors
+                    )
+                }
+                drawerItem("Home")
+                drawerItem("Mood Tracker")
+                drawerItem("Sleep Tracker")
+                drawerItem("Diary")
+                drawerItem("Chatbot")
+                drawerItem("Recreationals")
+                drawerItem("Focus Mode")
+                drawerItem("Music")      // NEW entry
+                drawerItem("Settings")
             }
         }
     ) {
@@ -311,8 +260,7 @@ fun MainScreen() {
                         lightColor = cardColor,
                         textColor = textColor
                     )
-                    // START MODIFICATION: Add Recreationals content route
-                    // We route all game-related IDs back to RecreationalsPage, which manages internal state.
+                    // Recreationals hub manages inner screens
                     "Recreationals", "TapperGame", "HoldGame", "MemoryGame" -> RecreationalsPage(
                         darkColor = primaryColor,
                         lightColor = cardColor,
@@ -320,10 +268,16 @@ fun MainScreen() {
                         onNavigateToGame = { gameId -> currentPage = gameId },
                         onNavigateBack = { currentPage = "Recreationals" }
                     )
-                    // END MODIFICATION
+                    // NEW Music page route
+                    "Music" -> MusicPage(
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor
+                    )
                     else -> Text("Page Not Found: $currentPage", color = textColor)
                 }
             }
+
             if (showInfoDialog) {
                 InfoDialog(
                     info = infoContent,
