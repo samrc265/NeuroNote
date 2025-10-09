@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
@@ -24,87 +23,102 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-/**
- * Breathing Exercise page.
- * - Slow, soothing animation (Inhale 4s, Hold 4s, Exhale 6s)
- * - Exhale circle slightly smaller for visual calm
- * - Guided countdown overlay (moves with the circle)
- * - Texts never collide with the circle (reserved lane)
- * - Extra safety around animations/coroutines to prevent crashes
- */
 @Composable
 fun BreathingPage(
-    darkColor: Color,
-    lightColor: Color,
-    textColor: Color
+    darkColor: Color,   // theme primary/accent (use in dark mode body)
+    lightColor: Color,  // card color (unchanged)
+    textColor: Color    // normal text color for light mode
 ) {
-    val isDark = isSystemInDarkTheme()
-    val pageBg = if (isDark) Color(0xFF151515) else Color.White
+    // Use the app's own dark-mode toggle so colors follow your switch
+    val isDark by AppThemeManager.isDarkTheme
+
+    // Page background stays as you liked earlier
+    val pageBg = if (isDark) Color(0xFF101214) else Color.White
     val circleColor = darkColor
 
-    // Phase lengths (seconds)
+    // Colors
+    val headingColor = if (isDark) darkColor else textColor
+    val affirmationColor = if (isDark) darkColor else textColor.copy(alpha = 0.9f)
+
+    // Smooth, soothing timing
     val inhaleSec = 4
     val holdSec = 4
     val exhaleSec = 6
 
-    // Circle geometry
+    // Keep text clear of the circle area
     val baseSize = 180.dp
-    val maxScale = 1.24f   // Hold peak (also reached at end of Inhale)
-    val minScale = 0.75f   // Exhale smallest
-    val circleLaneHeight = baseSize * maxScale + 40.dp // reserved lane (prevents collision)
+    val maxScale = 1.24f
+    val minScale = 0.75f
+    val circleLaneHeight = baseSize * maxScale + 40.dp
 
-    // State
     var selectedMinutes by rememberSaveable { mutableIntStateOf(1) }
     var isRunning by rememberSaveable { mutableStateOf(false) }
-    var stage by rememberSaveable { mutableStateOf("Ready") } // Ready/Inhale/Hold/Exhale
+    var stage by rememberSaveable { mutableStateOf("Ready") }
     var motivationalText by rememberSaveable {
         mutableStateOf("Find a comfortable seat and relax your shoulders.")
     }
     var phaseCountdown by rememberSaveable { mutableIntStateOf(0) }
 
-    // Animatable with guard
+    // 🔁 Rotating motivational messages per phase
+    val inhaleMsgs = remember {
+        listOf(
+            "Breathe in softly… fill the belly.",
+            "Slow, deep inhale… let the chest rise.",
+            "Inhale gently through the nose.",
+            "Draw in calm with every breath."
+        )
+    }
+    val holdMsgs = remember {
+        listOf(
+            "Hold gently… stay calm.",
+            "Softly hold… feel the stillness.",
+            "Pause here… steady and relaxed.",
+            "Quiet pause… you’re doing great."
+        )
+    }
+    val exhaleMsgs = remember {
+        listOf(
+            "Slowly breathe out… let go 🌙",
+            "Exhale… release any tension.",
+            "Long exhale… soften the shoulders.",
+            "Breathe out… relax the jaw."
+        )
+    }
+    var inhaleIdx by rememberSaveable { mutableIntStateOf(0) }
+    var holdIdx by rememberSaveable { mutableIntStateOf(0) }
+    var exhaleIdx by rememberSaveable { mutableIntStateOf(0) }
+
     val scale = remember { Animatable(1f) }
     val scope = rememberCoroutineScope()
 
     DisposableEffect(Unit) {
-        onDispose {
-            // Safely return to base if composable leaves composition
-            scope.launch {
-                runCatching { scale.animateTo(1f, tween(300)) }
-            }
-        }
+        onDispose { scope.launch { runCatching { scale.animateTo(1f, tween(300)) } } }
     }
 
     fun setStage(newStage: String) {
         stage = newStage
         when (newStage) {
             "Inhale" -> {
-                motivationalText = "Breathe in softly… fill the belly."
+                motivationalText = inhaleMsgs[inhaleIdx % inhaleMsgs.size]
+                inhaleIdx++
                 phaseCountdown = inhaleSec
-                scope.launch {
-                    // If job is cancelled while animating, swallow the exception
-                    runCatching { scale.animateTo(1.22f, tween(inhaleSec * 1000)) }
-                }
+                scope.launch { runCatching { scale.animateTo(1.22f, tween(inhaleSec * 1000)) } }
             }
             "Hold" -> {
-                motivationalText = "Hold gently… stay calm."
+                motivationalText = holdMsgs[holdIdx % holdMsgs.size]
+                holdIdx++
                 phaseCountdown = holdSec
-                scope.launch {
-                    runCatching { scale.animateTo(maxScale, tween(holdSec * 1000)) }
-                }
+                scope.launch { runCatching { scale.animateTo(maxScale, tween(holdSec * 1000)) } }
             }
             "Exhale" -> {
-                motivationalText = "Slowly breathe out… let go 🌙"
+                motivationalText = exhaleMsgs[exhaleIdx % exhaleMsgs.size]
+                exhaleIdx++
                 phaseCountdown = exhaleSec
-                scope.launch {
-                    runCatching { scale.animateTo(minScale, tween(exhaleSec * 1000)) }
-                }
+                scope.launch { runCatching { scale.animateTo(minScale, tween(exhaleSec * 1000)) } }
             }
             else -> {
                 phaseCountdown = 0
-                scope.launch {
-                    runCatching { scale.animateTo(1f, tween(300)) }
-                }
+                scope.launch { runCatching { scale.animateTo(1f, tween(300)) } }
             }
         }
     }
@@ -112,8 +126,7 @@ fun BreathingPage(
     var runner: Job? by remember { mutableStateOf(null) }
 
     fun stopSession() {
-        runner?.cancel()
-        runner = null
+        runner?.cancel(); runner = null
         isRunning = false
         setStage("Ready")
         motivationalText = "Find a comfortable seat and relax your shoulders."
@@ -122,46 +135,32 @@ fun BreathingPage(
     fun startSession() {
         if (isRunning) return
         isRunning = true
-
-        val totalSeconds = (selectedMinutes * 60).coerceAtLeast(1) // guard
+        val totalSeconds = (selectedMinutes * 60).coerceAtLeast(1)
 
         runner = scope.launch {
             var elapsed = 0
-
             try {
                 while (isActive && elapsed < totalSeconds) {
-                    // INHALE
                     setStage("Inhale")
                     repeat(inhaleSec) {
                         if (!isActive) return@launch
-                        delay(1000)
-                        phaseCountdown = (phaseCountdown - 1).coerceAtLeast(0)
-                        elapsed++
+                        delay(1000); phaseCountdown--; elapsed++
                         if (elapsed >= totalSeconds) return@launch
                     }
-
-                    // HOLD
                     setStage("Hold")
                     repeat(holdSec) {
                         if (!isActive) return@launch
-                        delay(1000)
-                        phaseCountdown = (phaseCountdown - 1).coerceAtLeast(0)
-                        elapsed++
+                        delay(1000); phaseCountdown--; elapsed++
                         if (elapsed >= totalSeconds) return@launch
                     }
-
-                    // EXHALE
                     setStage("Exhale")
                     repeat(exhaleSec) {
                         if (!isActive) return@launch
-                        delay(1000)
-                        phaseCountdown = (phaseCountdown - 1).coerceAtLeast(0)
-                        elapsed++
+                        delay(1000); phaseCountdown--; elapsed++
                         if (elapsed >= totalSeconds) return@launch
                     }
                 }
             } finally {
-                // Ensure UI resets gracefully whether finished or cancelled
                 isRunning = false
                 stage = "Ready"
                 phaseCountdown = 0
@@ -171,28 +170,28 @@ fun BreathingPage(
         }
     }
 
-    // ---------- UI ----------
+    // --------- UI ----------
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(pageBg)
             .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically)
     ) {
-
+        // Heading
         Text(
             text = "Breathing Exercise",
             style = MaterialTheme.typography.titleLarge.copy(
-                fontSize = 22.sp,
-                fontWeight = FontWeight.SemiBold
+                fontSize = 22.sp, fontWeight = FontWeight.SemiBold
             ),
-            color = textColor,
+            color = headingColor,
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
         Spacer(Modifier.height(8.dp))
 
-        // Fixed-height lane for the circle so texts never collide with it
+        // Circle lane
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -210,13 +209,12 @@ fun BreathingPage(
                         .background(circleColor, CircleShape)
                         .border(
                             width = 2.dp,
-                            color = if (isDark) Color.White.copy(alpha = 0.2f)
+                            color = if (isDark) Color.White.copy(alpha = 0.18f)
                             else Color.Black.copy(alpha = 0.08f),
                             shape = CircleShape
                         )
                 )
-
-                // Overlay cue + countdown (moves with circle)
+                // Label + countdown (on circle, keep white)
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = when (stage) {
@@ -228,7 +226,6 @@ fun BreathingPage(
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 2.dp),
                         textAlign = TextAlign.Center
                     )
                     if (isRunning && phaseCountdown > 0) {
@@ -244,10 +241,10 @@ fun BreathingPage(
             }
         }
 
-        // Motivational text (outside the lane; never overlaps)
+        // Rotating affirmation
         Text(
             text = motivationalText,
-            color = textColor.copy(alpha = if (isDark) 0.9f else 0.85f),
+            color = affirmationColor,
             fontSize = 15.sp,
             textAlign = TextAlign.Center,
             modifier = Modifier
@@ -257,7 +254,7 @@ fun BreathingPage(
 
         Spacer(Modifier.height(20.dp))
 
-        // Presets
+        // Preset buttons (selected = bold text + thicker border)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
@@ -265,20 +262,32 @@ fun BreathingPage(
         ) {
             @Composable
             fun preset(min: Int, label: String) {
+                val contentCol =
+                    (if (isDark) darkColor else textColor)
+                        .copy(alpha = if (isRunning) 0.65f else 1f)
+                val borderCol =
+                    (if (isDark) darkColor else textColor.copy(alpha = 0.55f))
+                        .copy(alpha = if (isRunning) 0.65f else 1f)
+
                 OutlinedButton(
                     onClick = { if (!isRunning) selectedMinutes = min },
-                    enabled = !isRunning,
+                    enabled = true,
                     modifier = Modifier
                         .width(96.dp)
                         .height(44.dp),
                     border = BorderStroke(
-                        1.dp,
-                        if (selectedMinutes == min) darkColor else textColor.copy(alpha = 0.4f)
+                        width = if (selectedMinutes == min) 2.dp else 1.dp,
+                        color = if (selectedMinutes == min) darkColor else borderCol
+                    ),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = contentCol
                     )
                 ) {
                     Text(
-                        label,
-                        color = if (selectedMinutes == min) darkColor else textColor
+                        text = label,
+                        color = if (selectedMinutes == min) darkColor else contentCol,
+                        fontWeight = if (selectedMinutes == min) FontWeight.Bold else FontWeight.Normal
                     )
                 }
             }
@@ -289,6 +298,7 @@ fun BreathingPage(
 
         Spacer(Modifier.height(24.dp))
 
+        // Start/Stop button
         Button(
             onClick = { if (isRunning) stopSession() else startSession() },
             colors = ButtonDefaults.buttonColors(
@@ -299,25 +309,6 @@ fun BreathingPage(
                 .width(140.dp)
                 .height(48.dp),
             shape = MaterialTheme.shapes.medium
-        ) {
-            Text(if (isRunning) "Stop" else "Start")
-        }
-
-        if (!isRunning) {
-            Spacer(Modifier.height(20.dp))
-            Card(
-                colors = CardDefaults.cardColors(containerColor = lightColor),
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = if (isDark) 0.dp else 1.dp)
-            ) {
-                Text(
-                    text = "Tip: Breathe through your nose, keep your shoulders relaxed, and let the belly rise and fall.",
-                    color = textColor,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(16.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+        ) { Text(if (isRunning) "Stop" else "Start") }
     }
 }
