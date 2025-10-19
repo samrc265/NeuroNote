@@ -1,15 +1,15 @@
 import org.gradle.kotlin.dsl.implementation
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     // Add the Kotlin Serialization plugin here
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.10"
-    // 🚀 PROTOBUF PLUGIN (REQUIRED FOR DATASTORE)
+    //  🚀  PROTOBUF PLUGIN (REQUIRED FOR DATASTORE)
     id("com.google.protobuf") version "0.9.4"
 }
-
-// 🚀 PROTOBUF CONFIGURATION
+//  🚀  PROTOBUF CONFIGURATION
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:3.25.1"
@@ -17,7 +17,7 @@ protobuf {
     generateProtoTasks {
         all().forEach { task ->
             task.builtins {
-                create("java") { // SWITCHED TO JAVA GENERATION
+                create("java") {  // SWITCHED TO JAVA GENERATION
                     option("lite")
                 }
                 // REMOVED Kotlin generation task to fix "Unresolved reference 'kotlin'" errors
@@ -25,7 +25,6 @@ protobuf {
         }
     }
 }
-
 android {
     namespace = "com.example.neuronote"
     compileSdk = 36
@@ -64,13 +63,13 @@ android {
 }
 
 dependencies {
-    implementation("com.google.android.exoplayer:exoplayer:2.19.1")
-    implementation("androidx.media3:media3-exoplayer:1.4.1")
-    implementation("androidx.media3:media3-ui:1.4.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose")
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation ("com.google.android.exoplayer:exoplayer:2.19.1")
+    implementation ("androidx.media3:media3-exoplayer:1.4.1")
+    implementation ("androidx.media3:media3-ui:1.4.1")
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose")
+    implementation ("androidx.compose.material:material-icons-extended")
     implementation ("com.google.ai.client.generativeai:generativeai:0.9.0")
-    implementation (libs.androidx.core.ktx)
+    implementation (libs.androidx.core.ktx) // Core KTX dependency for SharedPreferences.edit {}
     implementation (libs.androidx.lifecycle.runtime.ktx)
     implementation (libs.androidx.activity.compose)
     implementation (platform(libs.androidx.compose.bom))
@@ -83,9 +82,9 @@ dependencies {
     implementation ("androidx.compose.material3:material3:1.2.0")
     implementation ("androidx.activity:activity-compose:1.9.0")
     implementation ("androidx.compose.material3:material3:1.2.1")
-    // ✅ MPAndroidChart from JitPack
+    //  ✅  MPAndroidChart from JitPack
     implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
-    // ✅ Added for more icons like dark/light mode toggles
+    //  ✅  Added for more icons like dark/light mode toggles
     implementation ("androidx.compose.material:material-icons-extended-android:1.6.7")
     implementation (libs.generativeai)
     testImplementation (libs.junit)
@@ -95,20 +94,20 @@ dependencies {
     androidTestImplementation (libs.androidx.ui.test.junit4)
     debugImplementation (libs.androidx.ui.tooling)
     debugImplementation (libs.androidx.ui.test.manifest)
-    // ✅ Java 8+ API desugaring
+    //  ✅  Java 8+ API desugaring
     coreLibraryDesugaring ("com.android.tools:desugar_jdk_libs:2.0.4")
     // Add the Kotlinx Serialization runtime library here
     implementation ("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
-
-    // 🚀 PROTO DATASTORE
+    // 🔹 Added Biometric dependency
+    implementation("androidx.biometric:biometric-ktx:1.2.0-alpha05")
+    //  🚀  PROTO DATASTORE
     val datastore_version = "1.0.0"
-    implementation("androidx.datastore:datastore:$datastore_version")
+    implementation ("androidx.datastore:datastore:$datastore_version")
     // FIX: Switched to the full Protobuf Java library
-    implementation("com.google.protobuf:protobuf-java:3.25.1")
+    implementation ("com.google.protobuf:protobuf-java:3.25.1")
     // FIX: Added Kotlin extensions for easier interoperability
-    implementation("com.google.protobuf:protobuf-kotlin:3.25.1")
-    implementation("androidx.datastore:datastore-core:$datastore_version")
-
-    // 🚀 Coroutines for data ops
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation ("com.google.protobuf:protobuf-kotlin:3.25.1")
+    implementation ("androidx.datastore:datastore-core:$datastore_version")
+    //  🚀  Coroutines for data ops
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }
