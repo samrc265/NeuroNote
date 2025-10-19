@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column // CRITICAL: Added Column import
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -157,12 +158,14 @@ fun MainScreen() {
         }
     }
 
-    // High-contrast drawer item colors
+    // High-contrast drawer item colors - Updated for a glassmorphism/glowing effect
     val drawerItemColors = NavigationDrawerItemDefaults.colors(
-        selectedContainerColor = primaryColor.copy(alpha = 0.15f),
-        selectedTextColor = primaryColor,
+        // Selected item container should glow/use a soft highlight
+        selectedContainerColor = primaryColor.copy(alpha = 0.2f),
+        selectedTextColor = if (isDark) Color.White else primaryColor,
         selectedIconColor = primaryColor,
-        unselectedTextColor = textColor,
+        // Unselected items should be nearly transparent against the drawer background
+        unselectedTextColor = textColor.copy(alpha = 0.7f),
         unselectedContainerColor = Color.Transparent
     )
 
@@ -171,35 +174,47 @@ fun MainScreen() {
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet(drawerContainerColor = backgroundColor) {
-                Text(
-                    "NeuroNote",
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = textColor
-                )
-                @Composable
-                fun drawerItem(label: String) {
-                    NavigationDrawerItem(
-                        label = { Text(label, color = textColor) },
-                        selected = currentPage == label,
-                        onClick = {
-                            currentPage = label
-                            scope.launch { drawerState.close() }
-                        },
-                        colors = drawerItemColors
-                    )
+            ModalDrawerSheet(
+                // Use a slightly opaque version of the background for the base of the frosted effect
+                drawerContainerColor = backgroundColor.copy(alpha = 0.95f)
+            ) {
+                // Outer Box for the subtle inner frost layer, mimicking the glass card
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White.copy(alpha = if (isDark) 0.05f else 0.2f))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) { // Content Column
+                        Text(
+                            "NeuroNote",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = textColor,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        @Composable
+                        fun drawerItem(label: String) {
+                            NavigationDrawerItem(
+                                label = { Text(label, color = textColor) },
+                                selected = currentPage == label,
+                                onClick = {
+                                    currentPage = label
+                                    scope.launch { drawerState.close() }
+                                },
+                                colors = drawerItemColors
+                            )
+                        }
+                        drawerItem("Home")
+                        drawerItem("Mood Tracker")
+                        drawerItem("Sleep Tracker")
+                        drawerItem("Diary")
+                        drawerItem("Chatbot")
+                        drawerItem("Recreationals")
+                        drawerItem("Focus Mode")
+                        drawerItem("Music")
+                        drawerItem("Breathing")
+                        drawerItem("Settings")
+                    }
                 }
-                drawerItem("Home")
-                drawerItem("Mood Tracker")
-                drawerItem("Sleep Tracker")
-                drawerItem("Diary")
-                drawerItem("Chatbot")
-                drawerItem("Recreationals")
-                drawerItem("Focus Mode")
-                drawerItem("Music")
-                drawerItem("Breathing")
-                drawerItem("Settings")
             }
         }
     ) {
@@ -252,12 +267,7 @@ fun MainScreen() {
                             textColor = textColor,
                             onUpdateMoodClick = { currentPage = "Mood Tracker" }
                         )
-                        "Mood Tracker" -> MoodTrackerPage(
-                            darkColor = primaryColor,
-                            lightColor = cardColor,
-                            textColor = textColor,
-                            onDone = { currentPage = "Home" }
-                        )
+                        "Mood Tracker" -> MoodTrackerPage(darkColor = primaryColor, lightColor = cardColor, textColor = textColor, onDone = { currentPage = "Home" }) // FIX: Passed onDone lambda
                         "Sleep Tracker" -> SleepPage(
                             darkColor = primaryColor,
                             lightColor = cardColor,
