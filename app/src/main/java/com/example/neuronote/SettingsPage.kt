@@ -1,6 +1,7 @@
 package com.example.neuronote
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -24,8 +25,14 @@ import androidx.compose.ui.unit.dp
 data class ColorTheme(val lightColor: Color, val darkColor: Color, val name: String)
 
 @Composable
-fun SettingsPage(textColor: Color, lightColor: Color, darkColor: Color) { // Added darkColor
+fun SettingsPage(textColor: Color, lightColor: Color, darkColor: Color) {
     val context = LocalContext.current
+
+    // Theme logic to highlight the currently selected theme
+    val currentLightColor by AppThemeManager.lightColor
+    val currentDarkColor by AppThemeManager.darkColor
+
+    // App Lock state is observed from the manager
     val isAppLockEnabled by AppLockManager.isLockEnabled
 
     Column(
@@ -34,7 +41,7 @@ fun SettingsPage(textColor: Color, lightColor: Color, darkColor: Color) { // Add
             .padding(16.dp),
         verticalArrangement = Arrangement.SpaceBetween // Push the lock button to the bottom
     ) {
-        // --- Top Section: Theme Selection ---
+        // --- Top Section: Theme Selection with Highlight ---
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -42,9 +49,7 @@ fun SettingsPage(textColor: Color, lightColor: Color, darkColor: Color) { // Add
             Text(
                 text = "Choose Color Theme",
                 color = textColor,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = 16.dp)
             )
             val themes = listOf(
                 ColorTheme(Color(0xFFC8E6C9), Color(0xFF388E3C), "Forest Green"),
@@ -54,11 +59,18 @@ fun SettingsPage(textColor: Color, lightColor: Color, darkColor: Color) { // Add
                 ColorTheme(Color(0xFFE1BEE7), Color(0xFF6A1B9A), "Amethyst Purple"),
                 ColorTheme(Color(0xFFE0E0E0), Color(0xFF424242), "Charcoal Grey")
             )
-
             themes.forEach { theme ->
+                val isSelected = theme.darkColor == currentDarkColor && theme.lightColor == currentLightColor
+
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .border(
+                            // Applies the highlight border when selected
+                            width = if (isSelected) 3.dp else 0.dp,
+                            color = if (isSelected) theme.darkColor else Color.Transparent,
+                            shape = MaterialTheme.shapes.medium
+                        )
                         .clickable { AppThemeManager.updateTheme(context, theme.lightColor, theme.darkColor) },
                     colors = CardDefaults.cardColors(containerColor = theme.lightColor)
                 ) {
@@ -81,7 +93,7 @@ fun SettingsPage(textColor: Color, lightColor: Color, darkColor: Color) { // Add
             }
         }
 
-        // --- Bottom Section: App Lock Button (Reacts to theme colors) ---
+        // --- Bottom Section: App Lock Button (Secured and functional) ---
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -92,7 +104,7 @@ fun SettingsPage(textColor: Color, lightColor: Color, darkColor: Color) { // Add
             Button(
                 onClick = {
                     if (isAppLockEnabled) {
-                        // If enabled, prompt to disable or change (for now, let's toggle)
+                        // If enabled, disable the lock
                         AppLockManager.disableAppLock(context)
                     } else {
                         // If disabled, start the setup process (will set to enabled on success)
@@ -100,7 +112,7 @@ fun SettingsPage(textColor: Color, lightColor: Color, darkColor: Color) { // Add
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = darkColor, // Use darkColor for the button background
+                    containerColor = darkColor, // Use the current theme's dark color
                     contentColor = Color.White
                 ),
                 modifier = Modifier
