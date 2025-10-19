@@ -72,17 +72,18 @@ fun RecreationalsPage(
 ) {
     // Current state can be "GameList" or a specific game ID like "TapperGame"
     var currentPage by remember { mutableStateOf("GameList") }
+
     when (currentPage) {
         "GameList" -> GameListPage(
             darkColor = darkColor,
             lightColor = lightColor,
             textColor = textColor,
-            onGameSelect = { id -> currentPage = id }  // Internal switch to the game screen
+            onGameSelect = { id -> currentPage = id } // Internal switch to the game screen
         )
         "TapperGame" -> TapperGame(
             darkColor = darkColor,
             textColor = textColor,
-            onFinish = { currentPage = "GameList" }  // Navigates back to the list
+            onFinish = { currentPage = "GameList" } // Navigates back to the list
         )
         "HoldGame" -> HoldGame( // Game function is in TapperGame.kt
             darkColor = darkColor,
@@ -166,10 +167,12 @@ fun MemoryGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
     val dotColors = remember { listOf(Color.Red, Color.Blue, Color.Green) }
     val dotSize = 80.dp
     var currentRound by remember { mutableStateOf(1) }
-    var gameStage by remember { mutableStateOf("Ready") }  // Ready, Watch, Repeat, Fail
+    var gameStage by remember { mutableStateOf("Ready") }   // Ready, Watch, Repeat, Fail
     var sequence by remember { mutableStateOf(listOf<Int>()) }
     var playerInput by remember { mutableStateOf(listOf<Int>()) }
     var message by remember { mutableStateOf("Focus to begin...") }
+
+    // Animatable list remains the same
     val dotPulseScales = List(maxDots) { remember { Animatable(1f) } }
     val scope = rememberCoroutineScope()
 
@@ -179,19 +182,29 @@ fun MemoryGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
             gameStage = "Watch"
             message = "Watch Carefully..."
             playerInput = emptyList()
+
             // 1. Generate new sequence (add one more dot)
             val newDot = Random.nextInt(0, maxDots)
             sequence = sequence + newDot
+
             delay(1500) // Pause before showing sequence
-            // 2. Play the sequence
+
+            // 2. Play the sequence - NOW HANDLES REPETITIONS
             for (dotIndex in sequence) {
+                // Pulse the dot
                 scope.launch {
+                    // Start pulse (up)
                     dotPulseScales[dotIndex].animateTo(1.2f, tween(150))
-                    delay(500)
+                    // Wait for the peak and start down
+                    delay(300)
                     dotPulseScales[dotIndex].animateTo(1f, tween(150))
                 }
-                delay(700) // Time per flash
+                // CRITICAL FIX: Delay 1000ms (1 second) between distinct pulses/steps in the sequence.
+                // This gives enough time for the dot to fully reset before the next pulse,
+                // allowing repeated colors to pulse twice distinctly.
+                delay(1000)
             }
+
             // 3. Transition to player turn
             gameStage = "Repeat"
             message = "Your Turn: Tap in order."
@@ -201,22 +214,26 @@ fun MemoryGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
     // Handles the player tapping a dot
     fun handleTap(index: Int) {
         if (gameStage != "Repeat") return
-        playerInput = playerInput + index
+
         // 1. Give visual feedback
         scope.launch {
             dotPulseScales[index].animateTo(1.2f, tween(100))
             dotPulseScales[index].animateTo(1f, tween(100))
         }
+
+        playerInput = playerInput + index
+
         // 2. Check if the tap is incorrect
         if (playerInput.last() != sequence[playerInput.lastIndex]) {
-            message = " ❌  Incorrect! Try Again."
+            message = " ❌ Incorrect! Try Again."
             gameStage = "Fail"
             return
         }
+
         // 3. Check if the sequence is complete and correct
         if (playerInput.size == sequence.size) {
             currentRound++
-            message = " ✅  Success! Round $currentRound."
+            message = " ✅ Success! Round $currentRound."
             scope.launch {
                 delay(1000)
                 startNextRound()
@@ -267,6 +284,7 @@ fun MemoryGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
                 color = textColor.copy(alpha = 0.8f), // FIX: Ensure text color is based on textColor for visibility
                 style = MaterialTheme.typography.bodyLarge
             )
+
             // --- The Tappable Dot Area ---
             Row(
                 modifier = Modifier.fillMaxWidth().height(dotSize * 1.5f),
@@ -281,6 +299,7 @@ fun MemoryGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
                     )
                 }
             }
+
             // --- Control Buttons ---
             if (gameStage == "Ready") {
                 Button(
