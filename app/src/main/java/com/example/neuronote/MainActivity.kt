@@ -37,19 +37,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.FragmentActivity // CRITICAL IMPORT for Biometric fix
 import androidx.media3.common.util.UnstableApi
 import com.example.neuronote.ui.theme.NeuroNoteTheme
 import kotlinx.coroutines.launch
 
-// CRITICAL FIX: The class must extend FragmentActivity for AppLockManager to safely use BiometricPrompt
-class MainActivity : FragmentActivity() {
+class MainActivity : ComponentActivity() {
     @androidx.annotation.OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // ✅ Initialize the global music player so it survives page changes
+
+        //  ✅  Initialize the global music player so it survives page changes
         MusicPlayerManager.init(
-            applicationContext,
+            applicationContext ,
             listOf (
                 Track("1", "Anger Calming Music", "NeuroNote", R.raw.angercalmingmusic),
                 Track("2", "Sleep", "NeuroNote", R.raw.sleepmusic),
@@ -58,8 +57,6 @@ class MainActivity : FragmentActivity() {
                 Track("5", "Metronome", "NeuroNote", R.raw.metronome)
             )
         )
-        // ✅ Initialize the App Lock Manager
-        AppLockManager.init(this)
 
         setContent {
             // Load persisted theme/data (your existing managers)
@@ -67,17 +64,10 @@ class MainActivity : FragmentActivity() {
             DiaryDataManager.loadEntries(this)
             MoodDataManager.loadData(this)
             SleepDataManager.loadData(this)
+
             NeuroNoteTheme {
                 MainScreen()
             }
-        }
-    }
-
-    // Lifecycle hook to lock the app when it leaves the foreground
-    override fun onPause() {
-        super.onPause()
-        if (AppLockManager.isLockEnabled.value) {
-            AppLockManager.lockApp()
         }
     }
 }
@@ -91,9 +81,6 @@ fun MainScreen() {
     var diaryEntryToEdit by remember { mutableStateOf<DiaryEntry?>(null) }
     var showInfoDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
-
-    // --- App Lock State Observation ---
-    val isAppLocked by AppLockManager.isLocked
 
     // Observe theme states from the manager
     val lightColorTheme by AppThemeManager.lightColor
@@ -138,12 +125,10 @@ fun MainScreen() {
                 title = "Focus Mode",
                 text = "Enter a distraction-free session. Pick a preset or custom timer. When enabled, the app sets your phone to Do Not Disturb (silent) and restores it when you finish."
             )
-            // NEW page info
             "Music" -> InfoContent(
                 title = "Music",
                 text = "Play calming tracks while you journal or focus. The playlist uses free ambient tracks."
             )
-            // NEW: Breathing page info
             "Breathing" -> InfoContent(
                 title = "Breathing Exercise",
                 text = "Follow a simple inhale–hold–exhale rhythm. Choose 1, 3, or 5 minutes to relax before journaling or focusing."
@@ -165,8 +150,6 @@ fun MainScreen() {
         unselectedTextColor = textColor,
         unselectedContainerColor = Color.Transparent
     )
-
-    // --- MAIN APP CONTENT STARTS HERE ---
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -235,90 +218,79 @@ fun MainScreen() {
                     .background(backgroundColor),
                 contentAlignment = Alignment.Center
             ) {
-                // --- CRITICAL APP LOCK CHECK ---
-                if (isAppLocked) {
-                    AppLockScreen(
+                when (currentPage) {
+                    "Home" -> HomePage(
                         darkColor = primaryColor,
                         lightColor = cardColor,
                         textColor = textColor,
-                        onUnlockSuccess = { AppLockManager.unlockApp() }
+                        onUpdateMoodClick = { currentPage = "Mood Tracker" }
                     )
-                } else {
-                    // --- NORMAL PAGE NAVIGATION ---
-                    when (currentPage) {
-                        "Home" -> HomePage(
-                            darkColor = primaryColor,
-                            lightColor = cardColor,
-                            textColor = textColor,
-                            onUpdateMoodClick = { currentPage = "Mood Tracker" }
-                        )
-                        "Mood Tracker" -> MoodTrackerPage(
-                            darkColor = primaryColor,
-                            lightColor = cardColor,
-                            textColor = textColor,
-                            onDone = { currentPage = "Home" }
-                        )
-                        "Sleep Tracker" -> SleepPage(
-                            darkColor = primaryColor,
-                            lightColor = cardColor,
-                            textColor = textColor
-                        )
-                        "Diary" -> DiaryListPage(
-                            darkColor = primaryColor,
-                            lightColor = cardColor,
-                            textColor = textColor,
-                            onOpenEntry = {
-                                diaryEntryToEdit = it
-                                currentPage = "DiaryDetail"
-                            }
-                        )
-                        "Settings" -> SettingsPage(
-                            darkColor = primaryColor, // Added darkColor here
-                            textColor = textColor,
-                            lightColor = cardColor
-                        )
-                        "DiaryDetail" -> DiaryDetailPage(
-                            darkColor = primaryColor,
-                            lightColor = cardColor,
-                            textColor = textColor,
-                            entry = diaryEntryToEdit,
-                            onSave = {
-                                currentPage = "Diary"
-                                diaryEntryToEdit = null
-                            }
-                        )
-                        "Chatbot" -> ChatbotPage(
-                            darkColor = primaryColor,
-                            lightColor = cardColor,
-                            textColor = textColor
-                        )
-                        "Focus Mode" -> FocusModePage(
-                            darkColor = primaryColor,
-                            lightColor = cardColor,
-                            textColor = textColor
-                        )
-                        // Recreationals hub manages inner screens
-                        "Recreationals", "TapperGame", "HoldGame", "MemoryGame" -> RecreationalsPage(
-                            darkColor = primaryColor,
-                            lightColor = cardColor,
-                            textColor = textColor,
-                            onNavigateToGame = { gameId -> currentPage = gameId },
-                            onNavigateBack = { currentPage = "Recreationals" }
-                        )
-                        // Music page
-                        "Music" -> MusicPage(
-                            darkColor = primaryColor,
-                            lightColor = cardColor,
-                            textColor = textColor
-                        )
-                        // 🔹 NEW Breathing page route
-                        "Breathing" -> BreathingPage(
-                            darkColor = primaryColor,
-                            lightColor = cardColor,
-                            textColor = textColor
-                        )
-                        else -> Text("Page Not Found: $currentPage", color = textColor)
-                    }
+                    "Mood Tracker" -> MoodTrackerPage(
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor,
+                        onDone = { currentPage = "Home" }
+                    )
+                    "Sleep Tracker" -> SleepPage(
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor
+                    )
+                    "Diary" -> DiaryListPage(
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor,
+                        onOpenEntry = {
+                            diaryEntryToEdit = it
+                            currentPage = "DiaryDetail"
+                        }
+                    )
+                    // FIX: Corrected call to SettingsPage to match its current signature
+                    "Settings" -> SettingsPage(
+                        textColor = textColor,
+                        lightColor = cardColor
+                    )
+                    "DiaryDetail" -> DiaryDetailPage(
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor,
+                        entry = diaryEntryToEdit,
+                        onSave = {
+                            currentPage = "Diary"
+                            diaryEntryToEdit = null
+                        }
+                    )
+                    "Chatbot" -> ChatbotPage(
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor
+                    )
+                    "Focus Mode" -> FocusModePage(
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor
+                    )
+                    // Recreationals hub manages inner screens
+                    "Recreationals", "TapperGame", "HoldGame", "MemoryGame" -> RecreationalsPage(
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor,
+                        onNavigateToGame = { gameId -> currentPage = gameId },
+                        onNavigateBack = { currentPage = "Recreationals" }
+                    )
+                    // Music page
+                    "Music" -> MusicPage(
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor
+                    )
+                    // NEW Breathing page route
+                    "Breathing" -> BreathingPage(
+                        darkColor = primaryColor,
+                        lightColor = cardColor,
+                        textColor = textColor
+                    )
+                    else -> Text("Page Not Found: $currentPage", color = textColor)
                 }
             }
             if (showInfoDialog) {
