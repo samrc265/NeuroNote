@@ -232,7 +232,7 @@ fun HoldGame(darkColor: Color, textColor: Color, onFinish: () -> Unit) {
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
             Text(
-                "Objective: Hold the circle for the **perfect, unknown amount of time**.",
+                "Objective: Hold the circle for the perfect, unknown amount of time.",
                 color = textColor.copy(alpha = 0.8f),
                 style = MaterialTheme.typography.titleMedium,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
