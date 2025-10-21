@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,7 +30,11 @@ private val moodLabels = mapOf(
 fun HomePage(darkColor: Color, lightColor: Color, textColor: Color, onUpdateMoodClick: () -> Unit) {
     var graphFilter by remember { mutableStateOf("Month") }
     var pieChartRange by remember { mutableStateOf("Today") }
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
         Text("Mood Over Time", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = textColor)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("Month", "Year", "All Time").forEach { filter ->
@@ -39,7 +44,9 @@ fun HomePage(darkColor: Color, lightColor: Color, textColor: Color, onUpdateMood
                 ) { Text(filter, color = if (graphFilter == filter) Color.White else darkColor) }
             }
         }
-        MoodLineChart(filter = graphFilter)
+
+        // FIX 1: Pass textColor to MoodLineChart
+        MoodLineChart(filter = graphFilter, textColor = textColor)
         Divider()
         Text("Emotional Distribution", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = textColor)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -50,9 +57,11 @@ fun HomePage(darkColor: Color, lightColor: Color, textColor: Color, onUpdateMood
                 ) { Text(range, color = if (pieChartRange == range) Color.White else darkColor) }
             }
         }
+
         Row(modifier = Modifier.fillMaxWidth()) {
             Box(modifier = Modifier.weight(1f)) {
-                MoodPieChart(range = pieChartRange, darkColor = darkColor, lightColor = lightColor)
+                // FIX 2: Pass textColor to MoodPieChart
+                MoodPieChart(range = pieChartRange, darkColor = darkColor, lightColor = lightColor, textColor = textColor)
             }
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
@@ -60,84 +69,136 @@ fun HomePage(darkColor: Color, lightColor: Color, textColor: Color, onUpdateMood
                 MoodTextBreakdown(range = pieChartRange, textColor = textColor)
             }
         }
+
         Spacer(modifier = Modifier.weight(1f))
-        Button(onClick = onUpdateMoodClick, colors = ButtonDefaults.buttonColors(containerColor = darkColor),
-            shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+        Button(
+            onClick = onUpdateMoodClick,
+            colors = ButtonDefaults.buttonColors(containerColor = darkColor),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("Update Current Mood", color = Color.White, fontSize = 16.sp)
         }
     }
 }
 
 @Composable
-fun MoodLineChart(filter: String) {
+fun MoodLineChart(filter: String, textColor: Color) { // Receive textColor
     val history by MoodDataManager.historyMoods
     val filtered = when (filter) {
         "Month" -> history.filter { it.date.isAfter(LocalDate.now().minusMonths(1)) }
         "Year" -> history.filter { it.date.isAfter(LocalDate.now().minusYears(1)) }
         else -> history
     }
-    // FIX: Explicitly name the chart parameter in the update lambda to resolve scope issue
-    AndroidView(factory = { ctx -> LineChart(ctx) }, update = { chartInstance ->
-        val entries = filtered.map { Entry(it.date.dayOfYear.toFloat(), it.averageMood.toFloat()) }
-        val ds = LineDataSet(entries, "Avg Mood").apply {
-            color = AndroidColor.BLUE; valueTextColor = AndroidColor.BLACK; lineWidth = 2f
-            setCircleColor(AndroidColor.BLUE); circleRadius = 4f
-        }
-        chartInstance.data = LineData(ds)
-        chartInstance.xAxis.position = XAxis.XAxisPosition.BOTTOM
-        chartInstance.axisLeft.apply {
-            axisMinimum = 1f; axisMaximum = 5f; granularity = 1f; setLabelCount(5, true)
-        }
-        chartInstance.axisRight.isEnabled = false
-        chartInstance.description.isEnabled = false; chartInstance.legend.isEnabled = false
-        chartInstance.invalidate()
-    }, modifier = Modifier.fillMaxWidth().height(200.dp))
+
+    // FINAL FIX: Pre-calculate colors outside the update lambda to resolve type mismatch errors
+    val themedColorInt = remember(textColor) { textColor.toArgb() }
+    val gridColorInt = remember(textColor) { textColor.copy(alpha = 0.3f).toArgb() }
+
+
+    AndroidView(
+        factory = { ctx -> LineChart(ctx) },
+        update = { chartInstance ->
+            val entries = filtered.map { Entry(it.date.dayOfYear.toFloat(), it.averageMood.toFloat()) }
+            val ds = LineDataSet(entries, "Avg Mood").apply {
+                color = AndroidColor.BLUE
+                valueTextColor = themedColorInt // Use pre-calculated color
+                lineWidth = 2f
+                setCircleColor(AndroidColor.BLUE)
+                circleRadius = 4f
+            }
+
+            chartInstance.data = LineData(ds)
+            chartInstance.xAxis.position = XAxis.XAxisPosition.BOTTOM
+
+            // --- X-Axis Fix: Use explicit setters ---
+            chartInstance.xAxis.setTextColor(themedColorInt) // Use explicit setter
+            chartInstance.xAxis.setAxisLineColor(themedColorInt) // Use explicit setter
+            // Grid color remains removed to prevent the core type error.
+
+            chartInstance.axisLeft.apply {
+                axisMinimum = 1f
+                axisMaximum = 5f
+                granularity = 1f
+                setLabelCount(5, true)
+                // --- Y-Axis Fix: Use explicit setters ---
+                setDrawGridLines(true) // Ensure grid lines are drawn
+                setTextColor(themedColorInt) // Use explicit setter
+                setAxisLineColor(themedColorInt) // Use explicit setter
+                // Grid color remains removed to prevent the core type error.
+            }
+            chartInstance.axisRight.isEnabled = false
+            chartInstance.description.isEnabled = false
+            chartInstance.legend.isEnabled = false
+
+            // Ensure background is transparent and lines are visible against dark background
+            chartInstance.setGridBackgroundColor(Color.Transparent.toArgb())
+
+            chartInstance.invalidate()
+        },
+        modifier = Modifier.fillMaxWidth().height(200.dp)
+    )
 }
 
 @Composable
-fun MoodPieChart(range: String, darkColor: Color, lightColor: Color) {
+fun MoodPieChart(range: String, darkColor: Color, lightColor: Color, textColor: Color) { // Receive textColor
     val dailyMoods by MoodDataManager.dailyMoods
     val historyMoods by MoodDataManager.historyMoods
+
+    val themedColorInt = remember(textColor) { textColor.toArgb() }
+
 
     val moods: List<DailyMood> = if (range == "Today") {
         dailyMoods
     } else {
         historyMoods.takeLast(7).map { DailyMood(it.averageMood.toInt().coerceIn(1, 5), it.date) }
     }
+
     if (moods.isEmpty()) {
-        AndroidView(factory = { ctx ->
-            PieChart(ctx).apply {
-                val ds = PieDataSet(listOf(PieEntry(1f, "No Data")), "")
-                ds.colors = listOf(AndroidColor.LTGRAY)
-                data = PieData(ds)
-                description.isEnabled = false; legend.isEnabled = false
-                invalidate()
-            }
-        }, modifier = Modifier.fillMaxWidth().height(180.dp))
+        AndroidView(
+            factory = { ctx ->
+                PieChart(ctx).apply {
+                    val ds = PieDataSet(listOf(PieEntry(1f, "No Data")), "")
+                    ds.colors = listOf(AndroidColor.LTGRAY)
+                    data = PieData(ds)
+                    description.isEnabled = false
+                    legend.isEnabled = false
+                    setEntryLabelColor(themedColorInt) // Use theme textColor
+                    invalidate()
+                }
+            },
+            modifier = Modifier.fillMaxWidth().height(180.dp)
+        )
     } else {
-        AndroidView(factory = { ctx ->
-            PieChart(ctx).apply {
-                val counts = moods.groupingBy { it.mood }.eachCount()
-                val entries = counts.map { PieEntry(it.value.toFloat(), moodLabels[it.key]) }
-                val colors = entries.map {
-                    when (it.label) {
-                        "Very Sad" -> Color(0xFFE57373) // Light Red
-                        "Sad" -> Color(0xFFF44336)    // Red
-                        "Neutral" -> Color(0xFFFFCA28) // Yellow
-                        "Happy" -> Color(0xFF66BB6A)   // Light Green
-                        "Very Happy" -> Color(0xFF133D14)
-                        else -> lightColor
-                    }.hashCode()
+        AndroidView(
+            factory = { ctx ->
+                PieChart(ctx).apply {
+                    val counts = moods.groupingBy { it.mood }.eachCount()
+                    val entries = counts.map { PieEntry(it.value.toFloat(), moodLabels[it.key]) }
+                    val colors = entries.map {
+                        when (it.label) {
+                            "Very Sad" -> Color(0xFFE57373) // Light Red
+                            "Sad" -> Color(0xFFF44336)    // Red
+                            "Neutral" -> Color(0xFFFFCA28) // Yellow
+                            "Happy" -> Color(0xFF66BB6A)   // Light Green
+                            "Very Happy" -> Color(0xFF133D14)
+                            else -> lightColor
+                        }.toArgb()
+                    }
+                    val ds = PieDataSet(entries, "").apply {
+                        setColors(colors)
+                        valueTextColor = themedColorInt // Use theme textColor
+                        valueTextSize = 14f
+                        setEntryLabelColor(themedColorInt) // FIX: Set slice label text color
+                    }
+                    data = PieData(ds)
+                    description.isEnabled = false
+                    legend.isEnabled = false
+                    invalidate()
                 }
-                val ds = PieDataSet(entries, "").apply {
-                    setColors(colors)
-                    valueTextColor = AndroidColor.BLACK; valueTextSize = 14f
-                }
-                data = PieData(ds)
-                description.isEnabled = false; legend.isEnabled = false
-                invalidate()
-            }
-        }, modifier = Modifier.fillMaxWidth().height(180.dp))
+            },
+            modifier = Modifier.fillMaxWidth().height(180.dp)
+        )
     }
 }
 
@@ -151,6 +212,7 @@ fun MoodTextBreakdown(range: String, textColor: Color) {
 
     val counts = moods.groupingBy { it.mood }.eachCount()
     val total = counts.values.sum().takeIf { it > 0 } ?: 1
+
     if (counts.isEmpty()) {
         Text("No data available", fontSize = 14.sp, color = textColor)
     } else {
