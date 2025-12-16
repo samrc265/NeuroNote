@@ -1,5 +1,18 @@
-In today's chaotic, fast-paced world, finding time for mental wellness often falls behind professional and social demands. NeuroNote was designed specifically to tackle this challenge. We built this Android application using Kotlin Compose to create a single, intuitive digital space where users can build essential habits, better manage their emotions, and maintain focus throughout their day.
+# NeuroNote: Digital Wellness Journal 🧠
 
-The core idea behind NeuroNote is simple: to promote self-reflection and emotional awareness by bringing all necessary wellness tools together. Many people give up on mindfulness because the tools are either too confusing, too boring, or they constantly have to switch between apps. We solve this by offering a secure, personalized environment where users can seamlessly track their moods (using our unique visual system), record private diary entries, practice relaxation techniques, and quickly access AI-powered assistance for instant insights.
+**NeuroNote** is a modern journaling application focused on mental clarity. It allows users to track sentiment and log daily thoughts with a distraction-free user interface.
 
-NeuroNote is truly built for everyone—from students looking for better focus to working professionals seeking emotional balance. We focused on an approachable interface, a calming aesthetic, and unbreakable data privacy (thanks to our persistent App Lock). Ultimately, NeuroNote isn't just another tracking app; it's designed to be a holistic digital companion that guides users toward healthier emotional patterns and mindful living through personalized experiences.
+## ✨ Key Features
+* **Modern UI:** Built entirely with **Jetpack Compose** for a declarative UI approach.
+* **Mood Tracking:** Input handling for sentiment analysis and mood logging.
+* **Privacy First:** All data is stored locally on the device.
+
+## 🛠 Tech Stack
+* **Language:** Kotlin
+* **UI Toolkit:** Jetpack Compose
+* **Storage:** Room Database / DataStore
+
+## 🚀 How to Run
+1.  Clone the repository.
+2.  Open in **Android Studio (Electric Eel or newer recommended)**.
+3.  Build and Run.
